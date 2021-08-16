@@ -37,6 +37,7 @@ from ray.rllib.utils.torch_ops import convert_to_torch_tensor
 
 from gridworld import CoverageEnv
 from model import ComplexInputNetworkandCentrailzedCritic
+from logger import CustomLoggerCallback
 
 tf1, tf, tfv = try_import_tf()
 torch, nn = try_import_torch()
@@ -211,7 +212,12 @@ if __name__ == "__main__":
 
     config.update(coverage_config)
 
-    results = tune.run(CCTrainer, config=coverage_config, stop=stop, verbose=1)
+    results = tune.run(CCTrainer,
+                       config=coverage_config,
+                       stop=stop,
+                       verbose=1,
+                       local_dir="./log",
+                       )
 
     if args.as_test:
         check_learning_achieved(results, args.stop_reward)

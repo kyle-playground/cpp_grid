@@ -4,20 +4,19 @@ lambda: 0.95
 entropy_coeff: 0.01
 kl_coeff: 0.5
 kl_target: 0.01
-rollout_fragment_length: 32
-train_batch_size: 256
-sgd_minibatch_size: 32
+rollout_fragment_length: 4
+train_batch_size: 32
+sgd_minibatch_size: 4
 num_sgd_iter: 5
-num_workers: 10
-num_envs_per_worker: 1
+num_workers: 1
 lr: 5.0e-5
 gamma: 0.9
 batch_mode: truncate_episodes
-num_gpus: 1
-num_gpus_per_worker: 0.1
+num_cpus_per_worker: 3
+num_gpus_per_worker: 0
 model:
     custom_model: cc_model
-    post_fcnet_hiddens: [128,128]
+    post_fcnet_hiddens: [64,64]
     post_fcnet_activation: relu
     conv_filters: [[8, [4, 4], 2], [16, [4, 4], 2], [32, [3, 3], 2]]
     conv_activation: relu
@@ -28,12 +27,6 @@ env_config:
     max_episode_len: -1
     map_mode: random
     n_agents: 3
-evaluation_num_workers: 1
-evaluation_interval: 1
-evaluation_num_episodes: 10
-evaluation_config:
-    env_config:
-        termination_no_new_coverage: -1
-        max_episode_len: -1
 logger_config:
+
 

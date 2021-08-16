@@ -296,6 +296,26 @@ class CoverageEnv(MultiAgentEnv):
                  global_state,
                  ]),
         }
+        state_all_image = {
+            'agent_0': tuple(
+                [np.concatenate((mark_self_obs(states[0]),
+                                 states[1],
+                                 states[2]), axis=-1),
+                 global_state,
+                 ]),
+            'agent_1': tuple(
+                [np.concatenate((mark_self_obs(states[1]),
+                                 states[0],
+                                 states[2]), axis=-1),
+                 global_state,
+                 ]),
+            'agent_2': tuple(
+                [np.concatenate((mark_self_obs(states[2]),
+                                 states[0],
+                                 states[1]), axis=-1),
+                 global_state,
+                 ]),
+        }
         reward = {
             'agent_0': total_rewards / 3.0,
             'agent_1': total_rewards / 3.0,
@@ -328,4 +348,6 @@ class CoverageEnv(MultiAgentEnv):
         'rewards_team': total_rewards,
         'revisit steps': total_revisit,
         """
+        del states, dones, rewards, revisits
+
         return state, reward, done, info
