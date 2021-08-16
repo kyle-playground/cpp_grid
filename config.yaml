@@ -12,7 +12,7 @@ num_workers: 1
 lr: 5.0e-5
 gamma: 0.9
 batch_mode: truncate_episodes
-num_cpus_per_worker: 3
+num_cpus_per_worker: 1
 num_gpus_per_worker: 0
 model:
     custom_model: cc_model
@@ -27,6 +27,4 @@ env_config:
     max_episode_len: -1
     map_mode: random
     n_agents: 3
-logger_config:
-
 

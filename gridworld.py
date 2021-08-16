@@ -296,6 +296,7 @@ class CoverageEnv(MultiAgentEnv):
                  global_state,
                  ]),
         }
+        """
         state_all_image = {
             'agent_0': tuple(
                 [np.concatenate((mark_self_obs(states[0]),
@@ -316,6 +317,7 @@ class CoverageEnv(MultiAgentEnv):
                  global_state,
                  ]),
         }
+        """
         reward = {
             'agent_0': total_rewards / 3.0,
             'agent_1': total_rewards / 3.0,

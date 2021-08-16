@@ -207,7 +207,7 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
         out = torch.cat(outs, dim=1)
         out = self.vf_post_fc_stack(out)
         central_value = self.central_vf_layer(out)
-        return central_value
+        return torch.reshape(central_value, [-1])
 
     @override(ModelV2)
     def value_function(self):

@@ -37,7 +37,7 @@ from ray.rllib.utils.torch_ops import convert_to_torch_tensor
 
 from gridworld import CoverageEnv
 from model import ComplexInputNetworkandCentrailzedCritic
-from logger import CustomLoggerCallback
+
 
 tf1, tf, tfv = try_import_tf()
 torch, nn = try_import_torch()
@@ -111,7 +111,7 @@ def centralized_critic_postprocessing(policy,
 
     completed = sample_batch["dones"][-1]
     if completed:
-        last_r = [0.0]
+        last_r = 0.0
     else:
         last_r = sample_batch[SampleBatch.VF_PREDS][-1]
 
@@ -199,11 +199,12 @@ if __name__ == "__main__":
     config = {
         "multiagent": {
             "policies": {
-                "shared_policy": (PPOTorchPolicy, CoverageEnv.single_agent_observation_space,
+                "shared_policy": (None, CoverageEnv.single_agent_observation_space,
                                   CoverageEnv.single_agent_action_space,
                                   {"framework": "torch"}),
             },
             "policy_mapping_fn": (lambda aid: "shared_policy"),
+            "count_steps_by": "env_steps",
         },
         "model": {"custom_model": "cc_model"},
     }
@@ -213,7 +214,7 @@ if __name__ == "__main__":
     config.update(coverage_config)
 
     results = tune.run(CCTrainer,
-                       config=coverage_config,
+                       config=config,
                        stop=stop,
                        verbose=1,
                        local_dir="./log",
