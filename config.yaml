@@ -8,13 +8,13 @@ rollout_fragment_length: 32
 train_batch_size: 256
 sgd_minibatch_size: 32
 num_sgd_iter: 5
-num_workers: 1
+num_workers: 10
 num_envs_per_worker: 1
 lr: 5.0e-5
 gamma: 0.9
 batch_mode: truncate_episodes
-num_gpus: 0
-num_gpus_per_worker: 0
+num_gpus: 1
+num_gpus_per_worker: 0.1
 model:
     custom_model: cc_model
     post_fcnet_hiddens: [128,128]
