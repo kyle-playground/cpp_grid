@@ -1,16 +1,19 @@
 from skimage.draw import random_shapes
 from skimage.measure import label
 from scipy import ndimage
+import copy
 import numpy as np
 from enum import Enum
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 from matplotlib import colors
+
 import gym
-import copy
 from gym import spaces
-from gym.utils import seeding, EzPickle
+from gym.utils import seeding
+
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
-from ray.rllib.utils.typing import MultiAgentDict, AgentID
+
 
 
 DEFAULT_OPTIONS = {
@@ -176,14 +179,6 @@ class Explorer(object):
 
 
 class CoverageEnv(MultiAgentEnv):
-    """
-    single_agent_observation_space = spaces.Tuple(
-                [spaces.Box(0, np.inf, shape=DEFAULT_OPTIONS['world_shape'] + [2*DEFAULT_OPTIONS['n_agents']], dtype=np.int64),
-                 spaces.Box(low=np.array([0, 0, 0] * DEFAULT_OPTIONS['n_agents']),
-                            high=np.array([DEFAULT_OPTIONS['world_shape'][Y], DEFAULT_OPTIONS['world_shape'][X], 1] * DEFAULT_OPTIONS['n_agents']), dtype=np.int64),
-                 spaces.Box(0, np.inf, shape=DEFAULT_OPTIONS['world_shape']+[3], dtype=np.int64),
-                 ])
-    """
     single_agent_observation_space = spaces.Tuple(
                 [spaces.Box(-1, np.inf, shape=DEFAULT_OPTIONS['world_shape'] + [2*DEFAULT_OPTIONS['n_agents']]),
                  spaces.Box(low=np.array([-1, -1, -1] * DEFAULT_OPTIONS['n_agents']),
@@ -200,7 +195,7 @@ class CoverageEnv(MultiAgentEnv):
         self.map = GridWorld(self.cfg['world_shape'])
         self.team = []
         for i in range(self.cfg['n_agents']):
-            self.team.append(Explorer(self.agent_random_state, i, self, np.array(self.cfg['FOV'])))
+            self.team.append(Explorer(self.agent_random_state, i+1, self, np.array(self.cfg['FOV'])))
         self.timestep = None
 
         self.observation_space = spaces.Tuple(
@@ -212,6 +207,7 @@ class CoverageEnv(MultiAgentEnv):
         self.action_space = spaces.Discrete(5)
 
         # TODO: set color for rendering
+        self.fig = None
         self.map_colormap = colors.ListedColormap(['white', 'black', 'gray'])
         self.team_agents_color = colors.hsv_to_rgb(np.linspace(160 / 360, 250 / 360, self.cfg['n_agents']))
 
@@ -355,3 +351,35 @@ class CoverageEnv(MultiAgentEnv):
         del states, dones, rewards, revisits
 
         return state, reward, done, info
+
+    def clear_patches(self, ax):
+        [p.remove() for p in reversed(ax.patches)]
+        [t.remove() for t in reversed(ax.texts)]
+
+    def render_overview(self, ax, stepsize=1.0):
+        if not hasattr(self, 'im_map'):
+            ax.set_xticks([])
+            ax.set_yticks([])
+            self.im_map = ax.imshow(np.zeros(self.map.shape), vmin=0, vmax=3)
+
+        self.im_map.set_data(self.map_colormap(self.map.map))
+        for (team_key, team), team_colors in zip(self.teams.items(), self.teams_agents_color.values()):
+            if self.cfg['disabled_teams_step'][team_key]:
+                continue
+            for (agent_i, agent), color in zip(enumerate(team), team_colors):
+                rect_size = 1
+                pose_microstep = agent.prev_pose + (agent.pose - agent.prev_pose)*stepsize
+                rect = patches.Rectangle((pose_microstep[1] - rect_size / 2, pose_microstep[0] - rect_size / 2), rect_size, rect_size,
+                                         linewidth=1, edgecolor=self.teams_colors[team_key], facecolor='none')
+                ax.add_patch(rect)
+
+    def render(self, mode=None, stepsize=1.0):
+        if self.fig is None:
+            # interaction mode on
+            plt.ion()
+            # set figure size (inch x inch)
+            self.fig = plt.figure(figsize=(3, 3))
+            # subplot 111 means one graph
+            self.ax_overview = self.fig.add_subplot(1, 1, 1, aspect='equal')
+        self.clear_patches(self.ax_overview)
+        self.render_overview(self.ax_overview, stepsize)
