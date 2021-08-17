@@ -6,6 +6,7 @@ import numpy as np
 from enum import Enum
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import matplotlib
 from matplotlib import colors
 
 import gym
@@ -14,7 +15,7 @@ from gym.utils import seeding
 
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
-
+matplotlib.use("TkAgg")
 
 DEFAULT_OPTIONS = {
     'world_shape': [24, 24],
@@ -209,10 +210,12 @@ class CoverageEnv(MultiAgentEnv):
                  ])
         self.action_space = spaces.Discrete(5)
 
-        # TODO: set color for rendering
+        # set color for rendering env
         self.fig = None
         self.map_colormap = colors.ListedColormap(['white', 'black', 'gray'])
-        self.team_agents_color = colors.hsv_to_rgb(np.linspace(160 / 360, 250 / 360, self.cfg['n_agents']))
+        hsv = np.ones((self.cfg['n_agents'], 3))
+        hsv[..., 0] = np.linspace(160 / 360, 250 / 360, self.cfg['n_agents'])
+        self.team_agents_color = colors.hsv_to_rgb(hsv)
 
     def is_occupied(self, p, agent_ignore=None):
         for o in self.team:
@@ -365,27 +368,41 @@ class CoverageEnv(MultiAgentEnv):
             ax.set_yticks([])
             self.im_map = ax.imshow(np.zeros(self.map.shape), vmin=0, vmax=3)
 
+        # Turn map into white, black, and gray
         self.im_map.set_data(self.map_colormap(self.map.map))
-        for (team_key, team), team_colors in zip(self.teams.items(), self.teams_agents_color.values()):
-            if self.cfg['disabled_teams_step'][team_key]:
-                continue
-            for (agent_i, agent), color in zip(enumerate(team), team_colors):
-                rect_size = 1
-                pose_microstep = agent.prev_pose + (agent.pose - agent.prev_pose)*stepsize
-                rect = patches.Rectangle((pose_microstep[1] - rect_size / 2, pose_microstep[0] - rect_size / 2), rect_size, rect_size,
-                                         linewidth=1, edgecolor=self.teams_colors[team_key], facecolor='none')
-                ax.add_patch(rect)
+        for _, agent in enumerate(self.team):
+            rect_size = 1
+            pose_microstep = agent.prev_pos + (agent.position - agent.prev_pos) * stepsize
+            rect = patches.Rectangle((pose_microstep[1] - rect_size / 2, pose_microstep[0] - rect_size / 2), rect_size,
+                                     rect_size,
+                                     linewidth=1, edgecolor='b', facecolor='none')
+            ax.add_patch(rect)
+
+    def render_global_coverages(self, ax):
+        if not hasattr(self, 'im_cov_global'):
+            self.im_cov_global = ax.imshow(np.zeros(self.map.shape), vmin=0, vmax=100)
+        all_team_colors = [(0, 0, 0, 0)] + [tuple(list(c) + [0.5]) for c in self.team_agents_color]
+        coverage = self.map.coverage.copy()
+        self.im_cov_global.set_data(colors.ListedColormap(all_team_colors)(coverage))
 
     def render(self, mode=None, stepsize=1.0):
         if self.fig is None:
             # interaction mode on
             plt.ion()
             # set figure size (inch x inch)
-            self.fig = plt.figure(figsize=(3, 3))
+            self.fig = plt.figure(figsize=(5, 5))
             # subplot 111 means one graph
             self.ax_overview = self.fig.add_subplot(1, 1, 1, aspect='equal')
+        # clear patch for next image
         self.clear_patches(self.ax_overview)
+        # add agents' patches in ax
         self.render_overview(self.ax_overview, stepsize)
+        # add coverage
+        self.render_global_coverages(self.ax_overview)
+        # self.fig.canvas.draw()
+        plt.draw()
+        plt.pause(0.001)
+        return self.fig
 
-# TODO: Train again and write render
-# TODO: Check other mistakes ...
+# TODO: how fig work why nothing is printing
+# TODO: write render
