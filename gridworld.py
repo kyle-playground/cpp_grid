@@ -66,12 +66,14 @@ class GridWorld(object):
         return np.sum(covered_area)/np.sum(coverable_area)
 
     @staticmethod
+
     def _random_obstacles_map(width, height, max_shapes, min_shapes, max_size, min_size,
                               allow_overlap, shape=None):
         def build_map():
+            # TODO:  erase random seed = 1, not it's just for examination varifying policy does converge
             x, _ = random_shapes((height, width), max_shapes=max_shapes, min_shapes=min_shapes,
                                 max_size=max_size, min_size=min_size, multichannel=False, shape=shape,
-                                allow_overlap=allow_overlap,random_seed=1)
+                                allow_overlap=allow_overlap, random_seed=1)
             x[x == 255] = 0
             x[np.nonzero(x)] = 1
             x = ndimage.binary_fill_holes(x).astype(int)
@@ -143,7 +145,7 @@ class Explorer(object):
         is_valid_pos = lambda p: all([p[c] >= 0 and p[c] < self.gridworld.map.shape[c] for c in [Y, X]])  # All return ture if all elments are true
         is_obstacle = lambda p: self.gridworld.map.map[p[Y]][p[X]] == 1
 
-        self.prev_pos = self.position
+        self.prev_pos = self.position.copy()
         desired_pos = self.position + delta_pos
         if is_valid_pos(desired_pos) and not is_obstacle(desired_pos) and not self.gridworld.is_occupied(desired_pos, self):
             self.position = desired_pos
@@ -179,6 +181,7 @@ class Explorer(object):
 
 
 class CoverageEnv(MultiAgentEnv):
+    # TODO: take revisited areas in consideration
     single_agent_observation_space = spaces.Tuple(
                 [spaces.Box(-1, np.inf, shape=DEFAULT_OPTIONS['world_shape'] + [2*DEFAULT_OPTIONS['n_agents']]),
                  spaces.Box(low=np.array([-1, -1, -1] * DEFAULT_OPTIONS['n_agents']),
@@ -262,7 +265,7 @@ class CoverageEnv(MultiAgentEnv):
 
         agents_pos_map = np.zeros(self.map.shape, dtype=np.uint8)
         for agent in self.team:
-            agents_pos_map[agent.position[Y], agent.position[X]] = 1
+            agents_pos_map[agent.position[Y], agent.position[X]] = agent.agent_id
         global_state = np.stack([self.map.map, self.map.coverage > 0, agents_pos_map], axis=-1)
         # use axis=-1 (because tensor(batch, width, hight, channel)
         state = {
@@ -383,3 +386,6 @@ class CoverageEnv(MultiAgentEnv):
             self.ax_overview = self.fig.add_subplot(1, 1, 1, aspect='equal')
         self.clear_patches(self.ax_overview)
         self.render_overview(self.ax_overview, stepsize)
+
+# TODO: Train again and write render
+# TODO: Check other mistakes ...
