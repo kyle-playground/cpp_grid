@@ -201,6 +201,7 @@ class CoverageEnv(MultiAgentEnv):
         for i in range(self.cfg['n_agents']):
             self.team.append(Explorer(self.agent_random_state, i+1, self, np.array(self.cfg['FOV'])))
         self.timestep = None
+        self.termination = None
 
         self.observation_space = spaces.Tuple(
                 [spaces.Box(-1, np.inf, shape=self.cfg['world_shape'] + [2*self.cfg['n_agents']]),
@@ -228,6 +229,7 @@ class CoverageEnv(MultiAgentEnv):
     def reset(self):
         self.timestep = 0
         self.map.reset()
+        self.termination = int(self.map.all_coverable_area / 3) + 10
         for agent in self.team:
             agent.reset(self.agent_random_state)
 
@@ -263,7 +265,7 @@ class CoverageEnv(MultiAgentEnv):
             total_revisit += info
             dones.append(done)
 
-        world_terminator = self.timestep == (self.map.all_coverable_area+10) or self.map.get_coverage_fraction() == 1.0
+        world_terminator = self.timestep == self.termination or self.map.get_coverage_fraction() == 1.0
         all_done = all(dones) or world_terminator
 
         agents_pos_map = np.zeros(self.map.shape, dtype=np.uint8)
