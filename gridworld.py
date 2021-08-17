@@ -4,6 +4,7 @@ from scipy import ndimage
 import numpy as np
 from enum import Enum
 import matplotlib.pyplot as plt
+from matplotlib import colors
 import gym
 import copy
 from gym import spaces
@@ -67,7 +68,7 @@ class GridWorld(object):
         def build_map():
             x, _ = random_shapes((height, width), max_shapes=max_shapes, min_shapes=min_shapes,
                                 max_size=max_size, min_size=min_size, multichannel=False, shape=shape,
-                                allow_overlap=allow_overlap)
+                                allow_overlap=allow_overlap,random_seed=1)
             x[x == 255] = 0
             x[np.nonzero(x)] = 1
             x = ndimage.binary_fill_holes(x).astype(int)
@@ -201,7 +202,6 @@ class CoverageEnv(MultiAgentEnv):
         for i in range(self.cfg['n_agents']):
             self.team.append(Explorer(self.agent_random_state, i, self, np.array(self.cfg['FOV'])))
         self.timestep = None
-        # TODO: set color for rendering
 
         self.observation_space = spaces.Tuple(
                 [spaces.Box(-1, np.inf, shape=self.cfg['world_shape'] + [2*self.cfg['n_agents']]),
@@ -211,7 +211,9 @@ class CoverageEnv(MultiAgentEnv):
                  ])
         self.action_space = spaces.Discrete(5)
 
-        # self.reset()
+        # TODO: set color for rendering
+        self.map_colormap = colors.ListedColormap(['white', 'black', 'gray'])
+        self.team_agents_color = colors.hsv_to_rgb(np.linspace(160 / 360, 250 / 360, self.cfg['n_agents']))
 
     def is_occupied(self, p, agent_ignore=None):
         for o in self.team:
