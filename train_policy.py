@@ -54,9 +54,18 @@ parser.add_argument(
 parser.add_argument(
     "--stop-timesteps",
     type=int,
-    default=2000000,
+    default=500000,
     help="Number of timesteps to train.")
-
+# parser.add_argument(
+#     "--stop-iters",
+#     type=int,
+#     default=100,
+#     help="Number of iterations to train.")
+# parser.add_argument(
+#     "--stop-reward",
+#     type=float,
+#     default=7.99,
+#     help="Reward at which we stop training.")
 
 class CentralizedValueMixin:
     """Add method to evaluate the central value function from the model."""
@@ -218,6 +227,7 @@ if __name__ == "__main__":
                        stop=stop,
                        verbose=1,
                        local_dir="./log",
+                       checkpoint_at_end=True,   # add check point to save model
                        )
 
     if args.as_test:
