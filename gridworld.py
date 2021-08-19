@@ -15,7 +15,8 @@ from gym.utils import seeding
 
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
-matplotlib.use("TkAgg")
+# remote server cannot use TKAgg backend comment out while training
+# matplotlib.use("TkAgg")
 
 DEFAULT_OPTIONS = {
     'world_shape': [24, 24],
@@ -266,7 +267,8 @@ class CoverageEnv(MultiAgentEnv):
             dones.append(done)
 
         world_terminator = self.timestep == self.termination or self.map.get_coverage_fraction() == 1.0
-        all_done = all(dones) or world_terminator
+        # all_done = all(dones) or world_terminator
+        all_done = world_terminator
 
         agents_pos_map = np.zeros(self.map.shape, dtype=np.uint8)
         for agent in self.team:
