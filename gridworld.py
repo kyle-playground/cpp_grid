@@ -111,7 +111,8 @@ class Explorer(object):
         self.revisit = 0
         self.no_new_coverage_steps = None
         self.termination_no_new_coverage = 10
-        self.reward = None
+        self.step_reward = None
+        self.total_reward = 0
         self.reset(random_state)
 
     def reset(self, random_state):
@@ -130,8 +131,9 @@ class Explorer(object):
         self.coverage = np.zeros(self.gridworld.map.shape, dtype=np.bool)
         self.local_map = np.zeros(self.gridworld.map.shape, dtype=int)
         self.no_new_coverage_steps = 0
-        self.reward = 0
+        self.step_reward = 0
         self.revisit = 0
+        self.total_reward = 0
 
     def step(self,action):
         action = Action(action)  # action = Action.Move
@@ -141,7 +143,7 @@ class Explorer(object):
             Action.MOVE_LEFT:   [ 0, -1],
             Action.MOVE_UP:     [-1,  0],
             Action.MOVE_DOWN:   [ 1,  0],
-            Action.FREEZE:      [ 0,  0]
+            Action.FREEZE:      [ 0,  0],
         }[action]  # Convert 0...4 to Action.MOVE then to operation [? , ?]
 
         is_valid_pos = lambda p: all([p[c] >= 0 and p[c] < self.gridworld.map.shape[c] for c in [Y, X]])  # All return ture if all elments are true
@@ -154,12 +156,14 @@ class Explorer(object):
 
         if self.gridworld.map.coverage[self.position[Y], self.position[X]] == 0:
             self.gridworld.map.coverage[self.position[Y], self.position[X]] = self.agent_id
-            self.reward = 1
+            self.step_reward = 1
             self.no_new_coverage_steps = 0
         else:
-            self.reward = 0
+            self.step_reward = 0
             self.revisit += 1
             self.no_new_coverage_steps += 1
+
+        self.total_reward += self.step_reward
 
         self.coverage[self.position[Y], self.position[X]] = True
 
@@ -179,7 +183,7 @@ class Explorer(object):
         done = self.no_new_coverage_steps == self.termination_no_new_coverage
         info = self.revisit
 
-        return self.state, self.reward, done, info
+        return self.state, self.step_reward, done, info
 
 
 class CoverageEnv(MultiAgentEnv):
@@ -203,6 +207,8 @@ class CoverageEnv(MultiAgentEnv):
             self.team.append(Explorer(self.agent_random_state, i+1, self, np.array(self.cfg['FOV'])))
         self.timestep = None
         self.termination = None
+        # Performance evaluation
+        self.total_reward = 0
 
         self.observation_space = spaces.Tuple(
                 [spaces.Box(-1, np.inf, shape=self.cfg['world_shape'] + [2*self.cfg['n_agents']]),
@@ -231,6 +237,7 @@ class CoverageEnv(MultiAgentEnv):
         self.timestep = 0
         self.map.reset()
         self.termination = int(self.map.all_coverable_area / 3) + 10
+        self.total_reward = 0
         for agent in self.team:
             agent.reset(self.agent_random_state)
 
@@ -255,16 +262,15 @@ class CoverageEnv(MultiAgentEnv):
             action_index += 1
 
         states, dones, rewards, revisits = [], [], [], []
-        total_rewards = 0
-        total_revisit = 0
-
+        total_rewards_per_step = 0
         for i, agent in enumerate(self.team):
             state, reward, done, info = agent.update_state()
             states.append(state)
             rewards.append(reward)
-            total_rewards += reward
-            total_revisit += info
+            total_rewards_per_step += reward
+            revisits.append(info)
             dones.append(done)
+        self.total_reward += total_rewards_per_step
 
         world_terminator = self.timestep == self.termination or self.map.get_coverage_fraction() == 1.0
         # all_done = all(dones) or world_terminator
@@ -327,37 +333,34 @@ class CoverageEnv(MultiAgentEnv):
         }
         """
         reward = {
-            'agent_0': total_rewards / 3.0,
-            'agent_1': total_rewards / 3.0,
-            'agent_2': total_rewards / 3.0,
+            'agent_0': total_rewards_per_step / 3.0,
+            'agent_1': total_rewards_per_step / 3.0,
+            'agent_2': total_rewards_per_step / 3.0,
         }
         done = {"__all__": all_done}
         info = {
             'agent_0': {
+                'all_coverable_area': self.map.get_coverable_area(),
                 'current_global_coverage': self.map.get_coverage_fraction(),
-                'coverable_area': self.map.get_coverable_area(),
-                'rewards_team': total_rewards,
-                'revisit steps': total_revisit,
+                'self_reward': self.team[0].total_reward,
+                'rewards_team': self.total_reward,
+                'revisit steps': revisits[0],
             },
             'agent_1': {
+                'all_coverable_area': self.map.get_coverable_area(),
                 'current_global_coverage': self.map.get_coverage_fraction(),
-                'coverable_area': self.map.get_coverable_area(),
-                'rewards_team': total_rewards,
-                'revisit steps': total_revisit,
+                'self_reward': self.team[1].total_reward,
+                'rewards_team': self.total_reward,
+                'revisit steps': revisits[1],
             },
             'agent_2': {
-                'current_global_coverage': self.map.get_coverage_fraction(),
-                'coverable_area': self.map.get_coverable_area(),
-                'rewards_team': total_rewards,
-                'revisit steps': total_revisit,
+                'all_coverable_area': self.map.get_coverable_area(),
+                'current_global_coverage_fraction': self.map.get_coverage_fraction(),
+                'self_reward': self.team[2].total_reward,
+                'rewards_team': self.total_reward,
+                'revisit steps': revisits[2],
             },
         }
-        """
-        'current_global_coverage': self.map.get_coverage_fraction(),
-        'coverable_area': self.map.get_coverable_area(),
-        'rewards_team': total_rewards,
-        'revisit steps': total_revisit,
-        """
         del states, dones, rewards, revisits
 
         return state, reward, done, info
