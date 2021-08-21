@@ -54,7 +54,7 @@ parser.add_argument(
 parser.add_argument(
     "--stop-timesteps",
     type=int,
-    default=500000,
+    default = 1000000,
     help="Number of timesteps to train.")
 # parser.add_argument(
 #     "--stop-iters",
