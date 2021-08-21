@@ -57,34 +57,36 @@ def run_trial(trainer_class=PPOTrainer, checkpoint_path=None, cfg_update={}, ren
             obs, reward, done, info = env.step(action_dict)
             if render:
                 env.render()
+        plot_obs = False
+        print_info = True
+        if plot_obs:
+            fig, axes = plt.subplots(4, 2)
+            ax1 = axes[0, 0]
+            ax2 = axes[0, 1]
+            ax3 = axes[1, 0]
+            ax4 = axes[1, 1]
+            ax5 = axes[2, 0]
+            ax6 = axes[2, 1]
+            ax7 = axes[3, 0]
+            ax8 = axes[3, 1]
 
-        fig,axes = plt.subplots(4,2)
-        ax1 = axes[0, 0]
-        ax2 = axes[0, 1]
-        ax3 = axes[1, 0]
-        ax4 = axes[1, 1]
-        ax5 = axes[2, 0]
-        ax6 = axes[2, 1]
-        ax7 = axes[3, 0]
-        ax8 = axes[3, 1]
+            ax1.imshow(obs["agent_0"][0][..., 0])
+            ax2.imshow(obs["agent_0"][0][..., 1])
+            ax3.imshow(obs["agent_1"][0][..., 0])
+            ax4.imshow(obs["agent_1"][0][..., 1])
+            ax5.imshow(obs["agent_2"][0][..., 0])
+            ax6.imshow(obs["agent_2"][0][..., 1])
 
-        ax1.imshow(obs["agent_0"][0][..., 0])
-        ax2.imshow(obs["agent_0"][0][..., 1])
-        ax3.imshow(obs["agent_0"][0][..., 2])
-        ax4.imshow(obs["agent_0"][0][..., 3])
-        ax5.imshow(obs["agent_0"][0][..., 4])
-        ax6.imshow(obs["agent_0"][0][..., 5])
-
-        ax7.imshow(obs["agent_0"][2][..., 0])
-        ax8.imshow(obs["agent_0"][2][..., 1])
-        plt.show()
-        # print("agent_0")
-        # print(info['agent_0'])
-        # print("agent_1")
-        # print(info['agent_1'])
-        # print("agent_2")
-        # print(info['agent_2'])
-
+            ax7.imshow(obs["agent_0"][2][..., 0])
+            ax8.imshow(obs["agent_0"][2][..., 1])
+            plt.show()
+        if print_info:
+            print("agent_0")
+            print(info['agent_0'])
+            print("agent_1")
+            print(info['agent_1'])
+            print("agent_2")
+            print(info['agent_2'])
     except Exception as e:
         print(e, traceback.format_exc())
         raise
