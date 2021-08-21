@@ -410,6 +410,3 @@ class CoverageEnv(MultiAgentEnv):
         plt.draw()
         plt.pause(0.001)
         return self.fig
-
-# TODO: how fig work why nothing is printing
-# TODO: write render
