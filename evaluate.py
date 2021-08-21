@@ -48,6 +48,7 @@ def run_trial(trainer_class=PPOTrainer, checkpoint_path=None, cfg_update={}, ren
                 "model": cfg['model']
             }
         )
+        # print(trainer.get_policy().model)
         env = CoverageEnv(cfg['env_config'])
         obs = env.reset()
         for i in range(env.termination):
@@ -58,7 +59,7 @@ def run_trial(trainer_class=PPOTrainer, checkpoint_path=None, cfg_update={}, ren
             if render:
                 env.render()
         plot_obs = False
-        print_info = True
+        print_info = False
         if plot_obs:
             fig, axes = plt.subplots(4, 2)
             ax1 = axes[0, 0]
