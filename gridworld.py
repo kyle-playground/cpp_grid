@@ -129,7 +129,7 @@ class Explorer(object):
             self.position = random_pos(pos_mean, var)
 
         self.coverage = np.zeros(self.gridworld.map.shape, dtype=np.bool)
-        self.local_map = np.zeros(self.gridworld.map.shape, dtype=int)
+        self.local_map = np.ones(self.gridworld.map.shape, dtype=int) * 2
         self.no_new_coverage_steps = 0
         self.step_reward = 0
         self.revisit = 0
@@ -196,7 +196,7 @@ class CoverageEnv(MultiAgentEnv):
                  ])
     single_agent_action_space = spaces.Discrete(5)
 
-    def __init__(self, env_config):
+    def __init__(self, env_config=DEFAULT_OPTIONS):
         # EzPickle.__init__(self)
         self.cfg = copy.deepcopy(DEFAULT_OPTIONS)
         self.cfg.update(env_config)
@@ -252,7 +252,7 @@ class CoverageEnv(MultiAgentEnv):
         def mark_self_obs(own_state):
             for i in range(len(own_state)):
                 own_state[i] += own_state[i]
-            return state
+            return own_state
 
         self.timestep += 1
 
