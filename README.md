@@ -5,7 +5,7 @@ Coverage Path Planning based on reinforcement learning for three explorers in un
 
 Agents share the same policy and their observations(conv compressed) are concatenated for action inference assuming communication exists.
 
-PPO and centralized critic are adopted for the policy, the setting is overall a multi-agent task with independent learners. 
+PPO and centralized critic are adopted for the policy, the setting is overall a multi-agent task with an independent learner. 
 
 Reward = 1 if new grid, -0.2 if revisited
 
