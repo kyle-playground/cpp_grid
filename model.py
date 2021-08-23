@@ -62,29 +62,43 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
         for i, component in enumerate(self.original_space):
             # Image space.
             if len(component.shape) == 3:
-                config = {
-                    "conv_filters": model_config["conv_filters"]
-                    if "conv_filters" in model_config else
-                    get_filter_config(obs_space.shape),
-                    "conv_activation": model_config.get("conv_activation"),
-                    "post_fcnet_hiddens": [],
-                }
-                cnn = ModelCatalog.get_model_v2(
-                    component,
-                    action_space,
-                    num_outputs=None,
-                    model_config=config,
-                    framework="torch",
-                    name="cnn_{}".format(i))
-                # obs[0] for policy, obs[2] for centralized critic
                 if i == 0:
-                    concat_size += cnn.num_outputs * 4  # channel x final output shape(2x2)
+                    config = {
+                        "conv_filters": model_config["conv_filters"]
+                        if "conv_filters" in model_config else
+                        get_filter_config(obs_space.shape),
+                        "conv_activation": model_config.get("conv_activation"),
+                        "post_fcnet_hiddens": [],
+                    }
+                    cnn = ModelCatalog.get_model_v2(
+                        component,
+                        action_space,
+                        num_outputs=None,
+                        model_config=config,
+                        framework="torch",
+                        name="cnn_{}".format(i))
+                    concat_size += cnn.num_outputs  # channel x final output shape(2x2)
                     self.cnns[i] = cnn
                     self.add_module("cnn_all_channel", cnn)
-                elif i == 2:
-                    vf_concat_size = cnn.num_outputs * 4
-                    self.vf_cnns[i] = cnn
-                    self.add_module("cnn_global_critic", cnn)
+                elif i == 4:
+                    config = {
+                        "conv_filters": [[16, [4, 4], 2], [32, [4, 4], 2], [64, [3, 3], 2], [128, [3, 3], 1]],
+                        "conv_activation": model_config.get("conv_activation"),
+                        "post_fcnet_hiddens": [],
+                    }
+                    vf_cnn = ModelCatalog.get_model_v2(
+                        component,
+                        action_space,
+                        num_outputs=None,
+                        model_config=config,
+                        framework="torch",
+                        name="cnn_{}".format(i))
+                    vf_concat_size = vf_cnn.num_outputs
+                    self.vf_cnns[i] = vf_cnn
+                    self.add_module("cnn_global_critic", vf_cnn)
+                else:
+                    self.cnns[i] = self.cnns[0]
+                    concat_size += self.cnns[0].num_outputs
 
             # Discrete inputs -> One-hot encode.
             elif isinstance(component, Discrete):
@@ -183,7 +197,7 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
         original_obs = restore_original_dimensions(obs, self.original_space, "torch")
         outs = []
 
-        vf_cnn_out, _ = self.vf_cnns[2]({"obs": original_obs[2]})
+        vf_cnn_out, _ = self.vf_cnns[4]({"obs": original_obs[4]})
         outs.append(vf_cnn_out)
         flatten_self_acts = one_hot(action, self.action_space)
         outs.append(flatten_self_acts)

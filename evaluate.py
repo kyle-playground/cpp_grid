@@ -48,7 +48,6 @@ def run_trial(trainer_class=PPOTrainer, checkpoint_path=None, cfg_update={}, ren
                 "model": cfg['model']
             }
         )
-        # print(trainer.get_policy().model)
         env = CoverageEnv(cfg['env_config'])
         obs = env.reset()
         for i in range(env.termination):
@@ -58,6 +57,8 @@ def run_trial(trainer_class=PPOTrainer, checkpoint_path=None, cfg_update={}, ren
             obs, reward, done, info = env.step(action_dict)
             if render:
                 env.render()
+        # print
+        # print(trainer.get_policy().model)
         plot_obs = False
         print_info = False
         if plot_obs:
@@ -93,8 +94,8 @@ def run_trial(trainer_class=PPOTrainer, checkpoint_path=None, cfg_update={}, ren
         raise
 
 if __name__ == "__main__":
-    checkpoint_path = "log/log/CCPPOTrainer_2021-08-20_18-09-59/CCPPOTrainer_coverage_c6de8_00000_0_2021-08-20_18-09-59/checkpoint_000501"
+    checkpoint_path = "log/log/CCPPOTrainer_2021-08-21_21-08-59/CCPPOTrainer_coverage_f2fa4_00000_0_2021-08-21_21-08-59/checkpoint_000501"
     initialize()
-    run_trial(checkpoint_path=checkpoint_path, render=False)
+    run_trial(checkpoint_path=checkpoint_path, render=True)
 
 

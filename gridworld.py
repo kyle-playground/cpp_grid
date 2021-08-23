@@ -159,7 +159,7 @@ class Explorer(object):
             self.step_reward = 1
             self.no_new_coverage_steps = 0
         else:
-            self.step_reward = 0
+            self.step_reward = -0.2
             self.revisit += 1
             self.no_new_coverage_steps += 1
 
@@ -189,7 +189,9 @@ class Explorer(object):
 class CoverageEnv(MultiAgentEnv):
     # TODO: take revisited areas in consideration
     single_agent_observation_space = spaces.Tuple(
-                [spaces.Box(-1, np.inf, shape=DEFAULT_OPTIONS['world_shape'] + [2*DEFAULT_OPTIONS['n_agents']]),
+                [spaces.Box(-1, np.inf, shape=DEFAULT_OPTIONS['world_shape'] + [2]),
+                 spaces.Box(-1, np.inf, shape=DEFAULT_OPTIONS['world_shape'] + [2]),
+                 spaces.Box(-1, np.inf, shape=DEFAULT_OPTIONS['world_shape'] + [2]),
                  spaces.Box(low=np.array([-1, -1, -1] * DEFAULT_OPTIONS['n_agents']),
                             high=np.array([DEFAULT_OPTIONS['world_shape'][Y], DEFAULT_OPTIONS['world_shape'][X], 2] * DEFAULT_OPTIONS['n_agents'])),
                  spaces.Box(-1, np.inf, shape=DEFAULT_OPTIONS['world_shape']+[3]),
@@ -211,7 +213,9 @@ class CoverageEnv(MultiAgentEnv):
         self.total_reward = 0
 
         self.observation_space = spaces.Tuple(
-                [spaces.Box(-1, np.inf, shape=self.cfg['world_shape'] + [2*self.cfg['n_agents']]),
+                [spaces.Box(-1, np.inf, shape=self.cfg['world_shape'] + [2]),
+                 spaces.Box(-1, np.inf, shape=self.cfg['world_shape'] + [2]),
+                 spaces.Box(-1, np.inf, shape=self.cfg['world_shape'] + [2]),
                  spaces.Box(low=np.array([-1, -1, -1] * self.cfg['n_agents']),
                             high=np.array([self.cfg['world_shape'][Y], self.cfg['world_shape'][X], 2] * self.cfg['n_agents'])),
                  spaces.Box(-1, np.inf, shape=self.cfg['world_shape']+[3]),
@@ -249,10 +253,10 @@ class CoverageEnv(MultiAgentEnv):
         return self.step(freeze_all_agents)[0]  # [0] -> state(observation)
 
     def step(self, action_dict):
-        def mark_self_obs(own_state):
-            for i in range(len(own_state)):
-                own_state[i] += own_state[i]
-            return own_state
+        # def mark_self_obs(own_state):
+        #     for i in range(len(own_state)):
+        #         own_state[i] += own_state[i]
+        #     return own_state
 
         self.timestep += 1
 
@@ -283,55 +287,33 @@ class CoverageEnv(MultiAgentEnv):
         # use axis=-1 (because tensor(batch, width, hight, channel)
         state = {
             'agent_0': tuple(
-                [np.concatenate((mark_self_obs(states[0]),
-                                 states[1],
-                                 states[2]), axis=-1),
+                [states[0],
+                 states[1],
+                 states[2],
                  np.concatenate((np.append(self.team[0].position, 1),
                                  np.append(self.team[1].position, 0),
                                  np.append(self.team[2].position, 0)), axis=0),
                  global_state,
                  ]),
             'agent_1': tuple(
-                [np.concatenate((mark_self_obs(states[1]),
-                                 states[0],
-                                 states[2]), axis=-1),
+                [states[1],
+                 states[0],
+                 states[2],
                  np.concatenate((np.append(self.team[1].position, 1),
                                  np.append(self.team[0].position, 0),
                                  np.append(self.team[2].position, 0)), axis=0),
                  global_state,
                  ]),
             'agent_2': tuple(
-                [np.concatenate((mark_self_obs(states[2]),
-                                 states[0],
-                                 states[1]), axis=-1),
+                [states[2],
+                 states[0],
+                 states[1],
                  np.concatenate((np.append(self.team[2].position, 1),
                                  np.append(self.team[0].position, 0),
                                  np.append(self.team[1].position, 0)), axis=0),
                  global_state,
                  ]),
         }
-        """
-        state_all_image = {
-            'agent_0': tuple(
-                [np.concatenate((mark_self_obs(states[0]),
-                                 states[1],
-                                 states[2]), axis=-1),
-                 global_state,
-                 ]),
-            'agent_1': tuple(
-                [np.concatenate((mark_self_obs(states[1]),
-                                 states[0],
-                                 states[2]), axis=-1),
-                 global_state,
-                 ]),
-            'agent_2': tuple(
-                [np.concatenate((mark_self_obs(states[2]),
-                                 states[0],
-                                 states[1]), axis=-1),
-                 global_state,
-                 ]),
-        }
-        """
         reward = {
             'agent_0': total_rewards_per_step / 3.0,
             'agent_1': total_rewards_per_step / 3.0,
