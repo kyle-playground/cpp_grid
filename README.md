@@ -8,7 +8,7 @@ PPO and centralized critic are adopted for the policy, the setting is overall a 
 Reward = 1 if new grid, -0.2 if revisited
 
 ## Observation(state) for policy:
-Local map and local coverage from all agents, and position (X, Y, 2 if self else 1):
+Local map and local coverage (2) from all agents (3), and position (X, Y, 2 if self else 1):
 
 <img width="400" alt="Screen Shot 2021-08-23 at 2 25 56 PM" src="https://user-images.githubusercontent.com/64893909/130400936-a7e4819b-dfcc-4d32-9ad2-ae6e6fd3ef5e.png"><img width="400" alt="Screen Shot 2021-08-23 at 2 25 51 PM" src="https://user-images.githubusercontent.com/64893909/130400923-58b0d2b5-a7d0-4cef-82ce-db40bfe804fa.png">
 
