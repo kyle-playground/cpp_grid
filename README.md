@@ -1,4 +1,6 @@
 # cpp_grid [use rllib] task fail (2021.08.23)
+Environment code modified from https://github.com/proroklab/adversarial_comms
+
 Coverage Path Planning based on reinforcement learning for three explorer in unknown obstacle grid world.
 
 Agents share the same policy and their observations are concatenated for each agent assuming communication exists.
