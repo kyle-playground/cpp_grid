@@ -1,4 +1,4 @@
-# ccp_grid [use rllib]
+# cpp_grid [use rllib]
 Coverage Path Planning based on reinforcement learning for three explorer in unknown obstacle grid world.
 
 Agents share the same policy and their observations are concatenated for each agent assuming communication exists.
