@@ -5,6 +5,8 @@ Agents share the same policy and their observations are concatenated for each ag
 
 PPO and centralized critic are adopted for the policy, the setting is overall a multi-agent task with independent learners. 
 
+Reward = 1 if new grid, -0.2 if revisited
+
 ## Observation(state) for policy:
 Local map and local coverage from all agents, and position (X, Y, 2 if self else 1):
 
