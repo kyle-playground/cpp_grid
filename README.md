@@ -13,7 +13,7 @@ Local map and local coverage from all agents:
 
 ## Obs(state) for centralized critic:
 global map, global coverage, and agent position map:
-<img width="427" alt="Screen Shot 2021-08-23 at 2 26 19 PM" src="https://user-images.githubusercontent.com/64893909/130401129-75278716-f438-46b9-bc34-38e8da7e90f9.png" align="left" height="48" width="48" >
+<img width="427" alt="Screen Shot 2021-08-23 at 2 26 19 PM" src="https://user-images.githubusercontent.com/64893909/130401129-75278716-f438-46b9-bc34-38e8da7e90f9.png" align="left" height="300" width="300" >
 <img width="427" alt="Screen Shot 2021-08-23 at 2 26 14 PM" src="https://user-images.githubusercontent.com/64893909/130401147-0a883abc-9206-4a04-8ea4-174f9b89a1a0.png">
 <img width="427" alt="Screen Shot 2021-08-23 at 2 26 03 PM" src="https://user-images.githubusercontent.com/64893909/130401151-6ad51fe3-512f-4359-8c17-d5b15447e6cc.png">
 
