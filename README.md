@@ -1,4 +1,4 @@
-# cpp_grid [use rllib] task fail(2021.08.23)
+# cpp_grid [use rllib] task fail (2021.08.23)
 Coverage Path Planning based on reinforcement learning for three explorer in unknown obstacle grid world.
 
 Agents share the same policy and their observations are concatenated for each agent assuming communication exists.
