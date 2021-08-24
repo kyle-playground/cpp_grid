@@ -79,7 +79,7 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
                         name="cnn_{}".format(i))
                     concat_size += cnn.num_outputs  # channel x final output shape(2x2)
                     self.cnns[i] = cnn
-                    self.add_module("cnn_all_channel", cnn)
+                    self.add_module("cnn_local")
                 elif i == 4:
                     config = {
                         "conv_filters": [[16, [4, 4], 2], [32, [4, 4], 2], [64, [3, 3], 2], [128, [3, 3], 1]],
@@ -92,7 +92,7 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
                         num_outputs=None,
                         model_config=config,
                         framework="torch",
-                        name="cnn_{}".format(i))
+                        name="cnn_global")
                     vf_concat_size = vf_cnn.num_outputs
                     self.vf_cnns[i] = vf_cnn
                     self.add_module("cnn_global_critic", vf_cnn)
@@ -136,7 +136,7 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
             self.logits_layer = SlimFC(
                 in_size=self.post_fc_stack.num_outputs,
                 out_size=num_outputs,
-                activation_fn=None,   # TODO: check should I use softmax
+                activation_fn=None,
             )
             # Create the value branch model.
             self.value_layer = SlimFC(

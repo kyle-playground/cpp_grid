@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import traceback
 import matplotlib.pyplot as plt
+import os
 
 import ray
 from ray.rllib.models import ModelCatalog
@@ -10,12 +11,15 @@ from ray.rllib.agents.ppo.ppo import PPOTrainer
 from ray.tune.registry import register_env
 
 from gridworld import CoverageEnv
+from train_policy import CCTrainer
 from model import ComplexInputNetworkandCentrailzedCritic
 """
 best_checkpoint = results.get_best_checkpoint(
     results.trials[0], mode="max")
 print(f".. best checkpoint was: {best_checkpoint}")
 """
+
+
 def update_dict(d, u):
     for k, v in u.items():
         #?????????????
@@ -31,36 +35,58 @@ def initialize():
     ModelCatalog.register_custom_model("cc_model", ComplexInputNetworkandCentrailzedCritic)
 
 
-def run_trial(trainer_class=PPOTrainer, checkpoint_path=None, cfg_update={}, render=False):
+def run_trial(trainer_class=CCTrainer, checkpoint_path=None, cfg_update={}, render=False):
     try:
         if checkpoint_path is not None:
             with open(Path(checkpoint_path).parent / "params.json") as json_file:
                 cfg = json.load(json_file)
 
-        cfg = update_dict(cfg, cfg_update)
+        config = {
+            "rollout_fragment_length": 32,
+            "train_batch_size": 128,
+            "sgd_minibatch_size": 32,
+            "num_workers": 1,
+            "num_cpus_per_worker": 1,
+            "num_gpus_per_worker": 0,
+            "multiagent": {
+                "policies": {
+                    "shared_policy": (None, CoverageEnv.single_agent_observation_space,
+                                      CoverageEnv.single_agent_action_space,
+                                      {"framework": "torch"}),
+                },
+                "policy_mapping_fn": (lambda aid: "shared_policy"),
+                "count_steps_by": "env_steps",
+            },
+        }
+        cfg = update_dict(cfg, config)
 
         trainer = trainer_class(
             env=cfg['env'],
-            config={
-                "framework": "torch",
-                "num_workers": 0,
-                "env_config": cfg['env_config'],
-                "model": cfg['model']
-            }
+            config=cfg
         )
+        # TODO: restore model
+        if checkpoint_path is not None:
+            checkpoint_file = Path(checkpoint_path) / ('checkpoint-' + os.path.basename(checkpoint_path).split('_')[-1])
+            trainer.restore(str(checkpoint_file))
+
         env = CoverageEnv(cfg['env_config'])
         obs = env.reset()
-        for i in range(env.termination):
+
+        step = 0
+        while True:
+            step += 1
             action_dict = {}
             for agent_id, obs in obs.items():
                 action_dict[agent_id] = trainer.compute_action(obs)
             obs, reward, done, info = env.step(action_dict)
+            if done["__all__"]:
+                break
             if render:
                 env.render()
         # print
         # print(trainer.get_policy().model)
         plot_obs = False
-        print_info = False
+        print_info = True
         if plot_obs:
             fig, axes = plt.subplots(4, 2)
             ax1 = axes[0, 0]
@@ -90,12 +116,12 @@ def run_trial(trainer_class=PPOTrainer, checkpoint_path=None, cfg_update={}, ren
             print("agent_2")
             print(info['agent_2'])
     except Exception as e:
-        print(e, traceback.format_exc())
+        # print(e, traceback.format_exc())
         raise
 
 if __name__ == "__main__":
-    checkpoint_path = "log/log/CCPPOTrainer_2021-08-21_21-08-59/CCPPOTrainer_coverage_f2fa4_00000_0_2021-08-21_21-08-59/checkpoint_000501"
+    checkpoint_path = "log/log/CCPPOTrainer_2021-08-23_11-39-54/CCPPOTrainer_coverage_c7a42_00000_0_2021-08-23_11-39-54/checkpoint_501"
     initialize()
-    run_trial(checkpoint_path=checkpoint_path, render=True)
+    run_trial(checkpoint_path=checkpoint_path, render=False)
 
 
