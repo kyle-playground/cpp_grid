@@ -54,7 +54,7 @@ parser.add_argument(
 parser.add_argument(
     "--stop-timesteps",
     type=int,
-    default = 3000000,
+    default = 1000000,
     help="Number of timesteps to train.")
 # parser.add_argument(
 #     "--stop-iters",
@@ -150,14 +150,6 @@ def loss_with_central_critic(policy, model, dist_class, train_batch):
     return loss
 
 
-def setup_tf_mixins(policy, obs_space, action_space, config):
-    # Copied from PPOTFPolicy (w/o ValueNetworkMixin).
-    KLCoeffMixin.__init__(policy, config)
-    EntropyCoeffSchedule.__init__(policy, config["entropy_coeff"],
-                                  config["entropy_coeff_schedule"])
-    LearningRateSchedule.__init__(policy, config["lr"], config["lr_schedule"])
-
-
 def setup_torch_mixins(policy, obs_space, action_space, config):
     # Copied from PPOTorchPolicy  (w/o ValueNetworkMixin).
     TorchKLCoeffMixin.__init__(policy, config)
@@ -197,11 +189,29 @@ CCTrainer = PPOTrainer.with_updates(
 )
 
 if __name__ == "__main__":
-    ray.init(num_cpus=16, num_gpus=1)
+    mac_test = True
+    if mac_test:
+        ray.init()
+    else:
+        # For server
+        ray.init(num_cpus=16, num_gpus=3)
+
     args = parser.parse_args()
     with open('config.yaml', "rb") as config_file:
         coverage_config = yaml.load(config_file, Loader=yaml.FullLoader)
 
+    if mac_test:
+        test_config = {
+            "rollout_fragment_length": 8,
+            "train_batch_size": 64,
+            "sgd_minibatch_size": 8,
+            "num_sgd_iter": 8,
+            "num_workers": 1,
+            "num_gpus_per_worker": 0,
+        }
+        coverage_config.update(test_config)
+
+    # Register custom model and environment
     register_env("coverage", lambda config: CoverageEnv(config))
     ModelCatalog.register_custom_model("cc_model", ComplexInputNetworkandCentrailzedCritic)
 
@@ -215,7 +225,6 @@ if __name__ == "__main__":
             "policy_mapping_fn": (lambda aid: "shared_policy"),
             "count_steps_by": "env_steps",
         },
-        "model": {"custom_model": "cc_model"},
     }
 
     stop = {"timesteps_total": args.stop_timesteps}

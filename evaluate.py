@@ -120,7 +120,7 @@ def run_trial(trainer_class=CCTrainer, checkpoint_path=None, cfg_update={}, rend
         raise
 
 if __name__ == "__main__":
-    checkpoint_path = "log/log/CCPPOTrainer_2021-08-23_11-39-54/CCPPOTrainer_coverage_c7a42_00000_0_2021-08-23_11-39-54/checkpoint_501"
+    checkpoint_path = "log/log/CCPPOTrainer_2021-08-23_15-04-19/CCPPOTrainer_coverage_55ea3_00000_0_2021-08-23_15-04-19/checkpoint_1502"
     initialize()
     run_trial(checkpoint_path=checkpoint_path, render=False)
 

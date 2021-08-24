@@ -189,12 +189,12 @@ class Explorer(object):
 class CoverageEnv(MultiAgentEnv):
     # TODO: take revisited areas in consideration
     single_agent_observation_space = spaces.Tuple(
-                [spaces.Box(-1, np.inf, shape=DEFAULT_OPTIONS['world_shape'] + [2]),
-                 spaces.Box(-1, np.inf, shape=DEFAULT_OPTIONS['world_shape'] + [2]),
-                 spaces.Box(-1, np.inf, shape=DEFAULT_OPTIONS['world_shape'] + [2]),
+                [spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape'] + [2]),
+                 spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape'] + [2]),
+                 spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape'] + [2]),
                  spaces.Box(low=np.array([-1, -1, -1] * DEFAULT_OPTIONS['n_agents']),
                             high=np.array([DEFAULT_OPTIONS['world_shape'][Y], DEFAULT_OPTIONS['world_shape'][X], 2] * DEFAULT_OPTIONS['n_agents'])),
-                 spaces.Box(-1, np.inf, shape=DEFAULT_OPTIONS['world_shape']+[3]),
+                 spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape']+[3]),
                  ])
     single_agent_action_space = spaces.Discrete(5)
 
@@ -213,12 +213,12 @@ class CoverageEnv(MultiAgentEnv):
         self.total_reward = 0
 
         self.observation_space = spaces.Tuple(
-                [spaces.Box(-1, np.inf, shape=self.cfg['world_shape'] + [2]),
-                 spaces.Box(-1, np.inf, shape=self.cfg['world_shape'] + [2]),
-                 spaces.Box(-1, np.inf, shape=self.cfg['world_shape'] + [2]),
+                [spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape'] + [2]),
+                 spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape'] + [2]),
+                 spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape'] + [2]),
                  spaces.Box(low=np.array([-1, -1, -1] * self.cfg['n_agents']),
                             high=np.array([self.cfg['world_shape'][Y], self.cfg['world_shape'][X], 2] * self.cfg['n_agents'])),
-                 spaces.Box(-1, np.inf, shape=self.cfg['world_shape']+[3]),
+                 spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape']+[3]),
                  ])
         self.action_space = spaces.Discrete(5)
 
