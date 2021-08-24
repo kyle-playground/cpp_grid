@@ -197,7 +197,7 @@ CCTrainer = PPOTrainer.with_updates(
 )
 
 if __name__ == "__main__":
-    ray.init()
+    ray.init(num_cpus=16, num_gpus=1)
     args = parser.parse_args()
     with open('config.yaml', "rb") as config_file:
         coverage_config = yaml.load(config_file, Loader=yaml.FullLoader)
