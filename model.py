@@ -79,7 +79,7 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
                         name="cnn_{}".format(i))
                     concat_size += cnn.num_outputs  # channel x final output shape(2x2)
                     self.cnns[i] = cnn
-                    self.add_module("cnn_local")
+                    self.add_module("cnn_local", cnn)
                 elif i == 4:
                     config = {
                         "conv_filters": [[16, [4, 4], 2], [32, [4, 4], 2], [64, [3, 3], 2], [128, [3, 3], 1]],
