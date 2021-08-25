@@ -248,7 +248,7 @@ if __name__ == "__main__":
     results = tune.run(CCTrainer,
                        config=config,
                        stop=stop,
-                       verbose=1,
+                       verbose=2,
                        local_dir="./log",
                        checkpoint_at_end=True,   # add check point to save model
                        )

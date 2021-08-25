@@ -305,7 +305,7 @@ class CoverageEnv(MultiAgentEnv):
                 local_map_merge = known_area_merge.astype(np.int) + unknown_merge.astype(np.int) * 2
             else:
                 states.append(state)
-            if (not self.penalty_switch) & reward < 0:
+            if (not self.penalty_switch) & (reward < 0):
                 reward = 0
             rewards.append(reward)
             total_rewards_per_step += reward
