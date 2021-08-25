@@ -40,29 +40,38 @@ def run_trial(trainer_class=CCTrainer, checkpoint_path=None, cfg_update={}, rend
         if checkpoint_path is not None:
             with open(Path(checkpoint_path).parent / "params.json") as json_file:
                 cfg = json.load(json_file)
-
-        config = {
-            "rollout_fragment_length": 32,
-            "train_batch_size": 128,
-            "sgd_minibatch_size": 32,
-            "num_workers": 1,
-            "num_cpus_per_worker": 1,
-            "num_gpus_per_worker": 0,
-            "multiagent": {
-                "policies": {
-                    "shared_policy": (None, CoverageEnv.single_agent_observation_space,
-                                      CoverageEnv.single_agent_action_space,
-                                      {"framework": "torch"}),
+        if cfg["env_config"]["merge"]:
+            config = {
+                "num_workers": 1,
+                "num_cpus_per_worker": 1,
+                "num_gpus_per_worker": 0,
+                "multiagent": {
+                    "policies": {
+                        "shared_policy": (None, CoverageEnv.single_agent_merge_obs_space,
+                                          CoverageEnv.single_agent_action_space,
+                                          {"framework": "torch"}),
+                    },
                 },
-                "policy_mapping_fn": (lambda aid: "shared_policy"),
-                "count_steps_by": "env_steps",
-            },
-        }
+            }
+        else:
+            config = {
+                "num_workers": 1,
+                "num_cpus_per_worker": 1,
+                "num_gpus_per_worker": 0,
+                "multiagent": {
+                    "policies": {
+                        "shared_policy": (None, CoverageEnv.single_agent_observation_space,
+                                          CoverageEnv.single_agent_action_space,
+                                          {"framework": "torch"}),
+                    },
+                },
+            }
+
         cfg = update_dict(cfg, config)
 
         trainer = trainer_class(
             env=cfg['env'],
-            config=cfg
+            config=cfg,
         )
         # TODO: restore model
         if checkpoint_path is not None:

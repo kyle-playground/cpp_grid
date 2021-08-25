@@ -28,4 +28,6 @@ env_config:
     max_episode_len: -1
     map_mode: random
     n_agents: 3
+    merge: True
+    revisit_penalty: False
 

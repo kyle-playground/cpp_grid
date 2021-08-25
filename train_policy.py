@@ -15,6 +15,7 @@ import numpy as np
 from gym.spaces import Discrete
 import os
 import yaml
+import platform
 
 import ray
 from ray import tune
@@ -189,7 +190,7 @@ CCTrainer = PPOTrainer.with_updates(
 )
 
 if __name__ == "__main__":
-    mac_test = True
+    mac_test = platform.system() == "Darwin"
     if mac_test:
         ray.init()
     else:
@@ -214,18 +215,31 @@ if __name__ == "__main__":
     # Register custom model and environment
     register_env("coverage", lambda config: CoverageEnv(config))
     ModelCatalog.register_custom_model("cc_model", ComplexInputNetworkandCentrailzedCritic)
-
-    config = {
-        "multiagent": {
-            "policies": {
-                "shared_policy": (None, CoverageEnv.single_agent_observation_space,
-                                  CoverageEnv.single_agent_action_space,
-                                  {"framework": "torch"}),
+    # Choose merge map or concatenation of compressed states
+    if coverage_config["env_config"]["merge"]:
+        config = {
+            "multiagent": {
+                "policies": {
+                    "shared_policy": (None, CoverageEnv.single_agent_merge_obs_space,
+                                      CoverageEnv.single_agent_action_space,
+                                      {"framework": "torch"}),
+                },
+                "policy_mapping_fn": (lambda aid: "shared_policy"),
+                "count_steps_by": "env_steps",
             },
-            "policy_mapping_fn": (lambda aid: "shared_policy"),
-            "count_steps_by": "env_steps",
-        },
-    }
+        }
+    else:
+        config = {
+            "multiagent": {
+                "policies": {
+                    "shared_policy": (None, CoverageEnv.single_agent_observation_space,
+                                      CoverageEnv.single_agent_action_space,
+                                      {"framework": "torch"}),
+                },
+                "policy_mapping_fn": (lambda aid: "shared_policy"),
+                "count_steps_by": "env_steps",
+            },
+        }
 
     stop = {"timesteps_total": args.stop_timesteps}
 

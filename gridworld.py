@@ -25,6 +25,8 @@ DEFAULT_OPTIONS = {
     'max_episode_len': -1,
     "map_mode": "random",
     "n_agents": 3,
+    "merge": True,
+    "revisit_penalty": False,
 }
 
 X = 1
@@ -188,13 +190,19 @@ class Explorer(object):
 
 class CoverageEnv(MultiAgentEnv):
     # TODO: take revisited areas in consideration
-    single_agent_observation_space = spaces.Tuple(
+    single_agent_merge_obs_space = spaces.Tuple(
                 [spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape'] + [2]),
-                 spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape'] + [2]),
-                 spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape'] + [2]),
                  spaces.Box(low=np.array([-1, -1, -1] * DEFAULT_OPTIONS['n_agents']),
                             high=np.array([DEFAULT_OPTIONS['world_shape'][Y], DEFAULT_OPTIONS['world_shape'][X], 2] * DEFAULT_OPTIONS['n_agents'])),
                  spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape']+[3]),
+                 ])
+    single_agent_observation_space = spaces.Tuple(
+                [spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape'] + [2]),
+                 spaces.Box(low=np.array([-1, -1, -1] * DEFAULT_OPTIONS['n_agents']),
+                            high=np.array([DEFAULT_OPTIONS['world_shape'][Y], DEFAULT_OPTIONS['world_shape'][X], 2] * DEFAULT_OPTIONS['n_agents'])),
+                 spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape']+[3]),
+                 spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape'] + [2]),
+                 spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape'] + [2]),
                  ])
     single_agent_action_space = spaces.Discrete(5)
 
@@ -209,17 +217,30 @@ class CoverageEnv(MultiAgentEnv):
             self.team.append(Explorer(self.agent_random_state, i+1, self, np.array(self.cfg['FOV'])))
         self.timestep = None
         self.termination = None
+        self.merge = self.cfg["merge"]
+        self.penalty_switch = self.cfg["revisit_penalty"]
         # Performance evaluation
         self.total_reward = 0
 
-        self.observation_space = spaces.Tuple(
+        if self.merge:
+            self.observation_space = spaces.Tuple(
                 [spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape'] + [2]),
-                 spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape'] + [2]),
-                 spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape'] + [2]),
                  spaces.Box(low=np.array([-1, -1, -1] * self.cfg['n_agents']),
-                            high=np.array([self.cfg['world_shape'][Y], self.cfg['world_shape'][X], 2] * self.cfg['n_agents'])),
-                 spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape']+[3]),
+                            high=np.array(
+                                [self.cfg['world_shape'][Y], self.cfg['world_shape'][X], 2] * self.cfg['n_agents'])),
+                 spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape'] + [3]),
                  ])
+        else:
+            self.observation_space = spaces.Tuple(
+                [spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape'] + [2]),
+                 spaces.Box(low=np.array([-1, -1, -1] * self.cfg['n_agents']),
+                            high=np.array(
+                                [self.cfg['world_shape'][Y], self.cfg['world_shape'][X], 2] * self.cfg['n_agents'])),
+                 spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape'] + [3]),
+                 spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape'] + [2]),
+                 spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape'] + [2]),
+                 ])
+
         self.action_space = spaces.Discrete(5)
 
         # set color for rendering env
@@ -267,14 +288,34 @@ class CoverageEnv(MultiAgentEnv):
 
         states, dones, rewards, revisits = [], [], [], []
         total_rewards_per_step = 0
+        if self.merge:
+            local_map_merge = np.ones(self.map.shape) * 2
+
         for i, agent in enumerate(self.team):
             state, reward, done, info = agent.update_state()
-            states.append(state)
+            if self.merge:
+                local_map = state[..., 0]
+                local_known_area = (local_map < 2)
+                known_last_merge = (local_map_merge < 2)
+                known_area = known_last_merge.astype(np.int) + local_known_area.astype(np.int)
+                unknown_merge = (known_area == 0)
+                local_map[local_map == 2] = 0
+                local_map_merge[local_map_merge == 2] = 0
+                known_area_merge = (local_map_merge.astype(np.bool) | local_map.astype(np.bool))
+                local_map_merge = known_area_merge.astype(np.int) + unknown_merge.astype(np.int) * 2
+            else:
+                states.append(state)
+            if (not self.penalty_switch) & reward < 0:
+                reward = 0
             rewards.append(reward)
             total_rewards_per_step += reward
             revisits.append(info)
             dones.append(done)
+
         self.total_reward += total_rewards_per_step
+
+        if self.merge:
+            local_merge_state = np.stack([local_map_merge, self.map.coverage > 0], axis=-1)
 
         world_terminator = self.timestep == self.termination or self.map.get_coverage_fraction() == 1.0
         # all_done = all(dones) or world_terminator
@@ -285,35 +326,60 @@ class CoverageEnv(MultiAgentEnv):
             agents_pos_map[agent.position[Y], agent.position[X]] = agent.agent_id
         global_state = np.stack([self.map.map, self.map.coverage > 0, agents_pos_map], axis=-1)
         # use axis=-1 (because tensor(batch, width, hight, channel)
-        state = {
-            'agent_0': tuple(
-                [states[0],
-                 states[1],
-                 states[2],
-                 np.concatenate((np.append(self.team[0].position, 1),
-                                 np.append(self.team[1].position, 0),
-                                 np.append(self.team[2].position, 0)), axis=0),
-                 global_state,
-                 ]),
-            'agent_1': tuple(
-                [states[1],
-                 states[0],
-                 states[2],
-                 np.concatenate((np.append(self.team[1].position, 1),
-                                 np.append(self.team[0].position, 0),
-                                 np.append(self.team[2].position, 0)), axis=0),
-                 global_state,
-                 ]),
-            'agent_2': tuple(
-                [states[2],
-                 states[0],
-                 states[1],
-                 np.concatenate((np.append(self.team[2].position, 1),
-                                 np.append(self.team[0].position, 0),
-                                 np.append(self.team[1].position, 0)), axis=0),
-                 global_state,
-                 ]),
-        }
+        if self.merge:
+            state = {
+                'agent_0': tuple(
+                    [local_merge_state,
+                     np.concatenate((np.append(self.team[0].position, 1),
+                                     np.append(self.team[1].position, 0),
+                                     np.append(self.team[2].position, 0)), axis=0),
+                     global_state,
+                     ]),
+                'agent_1': tuple(
+                    [local_merge_state,
+                     np.concatenate((np.append(self.team[1].position, 1),
+                                     np.append(self.team[0].position, 0),
+                                     np.append(self.team[2].position, 0)), axis=0),
+                     global_state,
+                     ]),
+                'agent_2': tuple(
+                    [local_merge_state,
+                     np.concatenate((np.append(self.team[2].position, 1),
+                                     np.append(self.team[0].position, 0),
+                                     np.append(self.team[1].position, 0)), axis=0),
+                     global_state,
+                     ]),
+            }
+        else:
+            state = {
+                'agent_0': tuple(
+                    [states[0],
+                     np.concatenate((np.append(self.team[0].position, 1),
+                                     np.append(self.team[1].position, 0),
+                                     np.append(self.team[2].position, 0)), axis=0),
+                     global_state,
+                     states[1],
+                     states[2],
+                     ]),
+                'agent_1': tuple(
+                    [states[1],
+                     np.concatenate((np.append(self.team[1].position, 1),
+                                     np.append(self.team[0].position, 0),
+                                     np.append(self.team[2].position, 0)), axis=0),
+                     global_state,
+                     states[0],
+                     states[2],
+                     ]),
+                'agent_2': tuple(
+                    [states[2],
+                     np.concatenate((np.append(self.team[2].position, 1),
+                                     np.append(self.team[0].position, 0),
+                                     np.append(self.team[1].position, 0)), axis=0),
+                     global_state,
+                     states[0],
+                     states[1],
+                     ]),
+            }
         reward = {
             'agent_0': total_rewards_per_step / 3.0,
             'agent_1': total_rewards_per_step / 3.0,

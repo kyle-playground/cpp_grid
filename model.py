@@ -80,7 +80,7 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
                     concat_size += cnn.num_outputs  # channel x final output shape(2x2)
                     self.cnns[i] = cnn
                     self.add_module("cnn_local", cnn)
-                elif i == 4:
+                elif i == 2:
                     config = {
                         "conv_filters": [[16, [4, 4], 2], [32, [4, 4], 2], [64, [3, 3], 2], [128, [3, 3], 1]],
                         "conv_activation": model_config.get("conv_activation"),
@@ -197,7 +197,7 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
         original_obs = restore_original_dimensions(obs, self.original_space, "torch")
         outs = []
 
-        vf_cnn_out, _ = self.vf_cnns[4]({"obs": original_obs[4]})
+        vf_cnn_out, _ = self.vf_cnns[2]({"obs": original_obs[2]})
         outs.append(vf_cnn_out)
         flatten_self_acts = one_hot(action, self.action_space)
         outs.append(flatten_self_acts)

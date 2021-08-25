@@ -24,7 +24,7 @@ local_coverage = map_colormap(obs["agent_0"][0][..., 1])
 
 map = map_colormap(env.map.map)
 coverage = colors.ListedColormap(all_team_colors)(env.map.coverage)
-agent_map = colors.ListedColormap(all_team_colors)(obs["agent_0"][4][..., 2])
+agent_map = colors.ListedColormap(all_team_colors)(obs["agent_0"][2][..., 2])
 
 plt.imshow(map)
 plt.show()
