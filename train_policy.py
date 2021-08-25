@@ -55,7 +55,7 @@ parser.add_argument(
 parser.add_argument(
     "--stop-timesteps",
     type=int,
-    default = 1000000,
+    default = 2000000,
     help="Number of timesteps to train.")
 # parser.add_argument(
 #     "--stop-iters",
@@ -248,7 +248,7 @@ if __name__ == "__main__":
     results = tune.run(CCTrainer,
                        config=config,
                        stop=stop,
-                       verbose=2,
+                       verbose=1,
                        local_dir="./log",
                        checkpoint_at_end=True,   # add check point to save model
                        )

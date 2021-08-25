@@ -4,21 +4,23 @@ lambda: 0.9
 entropy_coeff: 0.01
 kl_coeff: 0.2
 kl_target: 0.01
-rollout_fragment_length: 200
-train_batch_size: 1000
-sgd_minibatch_size: 200
+clip_param: 0.2
+rollout_fragment_length: 100
+train_batch_size: 5000
+sgd_minibatch_size: 1000
 num_sgd_iter: 5
-num_workers: 5
+num_workers: 10
+num_envs_per_worker: 5
 lr: 5.0e-4
-gamma: 0.9
-batch_mode: complete_episodes
+gamma: 0.99
+batch_mode: truncate_episodes
 num_cpus_per_worker: 1
-num_gpus_per_worker: 0.5
+num_gpus_per_worker: 0.25
 model:
     custom_model: cc_model
     post_fcnet_hiddens: [64,64]
     post_fcnet_activation: relu
-    conv_filters: [[24, [4, 4], 2], [48, [4, 4], 2], [96, [3, 3], 2], [192, [3, 3], 1]]
+    conv_filters: [[16, [4, 4], 2], [32, [4, 4], 2], [64, [3, 3], 2], [128, [3, 3], 1]]
     conv_activation: relu
     vf_share_layers: False
 env_config:

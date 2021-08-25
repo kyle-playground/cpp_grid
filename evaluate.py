@@ -51,6 +51,7 @@ def run_trial(trainer_class=CCTrainer, checkpoint_path=None, cfg_update={}, rend
                                           CoverageEnv.single_agent_action_space,
                                           {"framework": "torch"}),
                     },
+                    "policy_mapping_fn": (lambda aid: "shared_policy"),
                 },
             }
         else:
@@ -64,6 +65,7 @@ def run_trial(trainer_class=CCTrainer, checkpoint_path=None, cfg_update={}, rend
                                           CoverageEnv.single_agent_action_space,
                                           {"framework": "torch"}),
                     },
+                    "policy_mapping_fn": (lambda aid: "shared_policy"),
                 },
             }
 
