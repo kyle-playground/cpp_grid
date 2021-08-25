@@ -217,8 +217,14 @@ class CoverageEnv(MultiAgentEnv):
             self.team.append(Explorer(self.agent_random_state, i+1, self, np.array(self.cfg['FOV'])))
         self.timestep = None
         self.termination = None
+        # Optional setting for environment
         self.merge = self.cfg["merge"]
         self.penalty_switch = self.cfg["revisit_penalty"]
+
+        self.map_known = self.cfg["map_known"]
+        if self.map_known:
+            assert self.merge, "map_know set True only if merge is True"
+
         # Performance evaluation
         self.total_reward = 0
 
@@ -317,6 +323,9 @@ class CoverageEnv(MultiAgentEnv):
         if self.merge:
             local_merge_state = np.stack([local_map_merge, self.map.coverage > 0], axis=-1)
 
+        if self.map_known:
+            map_known_state = np.stack([self.map.map, self.map.coverage > 0], axis=-1)
+
         world_terminator = self.timestep == self.termination or self.map.get_coverage_fraction() == 1.0
         # all_done = all(dones) or world_terminator
         all_done = world_terminator
@@ -344,6 +353,30 @@ class CoverageEnv(MultiAgentEnv):
                      ]),
                 'agent_2': tuple(
                     [local_merge_state,
+                     np.concatenate((np.append(self.team[2].position, 1),
+                                     np.append(self.team[0].position, 0),
+                                     np.append(self.team[1].position, 0)), axis=0),
+                     global_state,
+                     ]),
+            }
+        elif self.map_known:
+            state = {
+                'agent_0': tuple(
+                    [map_known_state,
+                     np.concatenate((np.append(self.team[0].position, 1),
+                                     np.append(self.team[1].position, 0),
+                                     np.append(self.team[2].position, 0)), axis=0),
+                     global_state,
+                     ]),
+                'agent_1': tuple(
+                    [map_known_state,
+                     np.concatenate((np.append(self.team[1].position, 1),
+                                     np.append(self.team[0].position, 0),
+                                     np.append(self.team[2].position, 0)), axis=0),
+                     global_state,
+                     ]),
+                'agent_2': tuple(
+                    [map_known_state,
                      np.concatenate((np.append(self.team[2].position, 1),
                                      np.append(self.team[0].position, 0),
                                      np.append(self.team[1].position, 0)), axis=0),

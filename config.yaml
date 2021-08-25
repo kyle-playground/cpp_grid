@@ -32,4 +32,5 @@ env_config:
     n_agents: 3
     merge: True
     revisit_penalty: False
+    map_known: False
 
