@@ -57,11 +57,11 @@ parser.add_argument(
     type=int,
     default = 2000000,
     help="Number of timesteps to train.")
-# parser.add_argument(
-#     "--stop-iters",
-#     type=int,
-#     default=100,
-#     help="Number of iterations to train.")
+parser.add_argument(
+    "--stop-iters",
+    type=int,
+    default=1000,
+    help="Number of iterations to train.")
 # parser.add_argument(
 #     "--stop-reward",
 #     type=float,

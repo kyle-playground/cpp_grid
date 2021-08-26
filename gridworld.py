@@ -27,6 +27,7 @@ DEFAULT_OPTIONS = {
     "n_agents": 3,
     "merge": True,
     "revisit_penalty": False,
+    "map_known": True
 }
 
 X = 1
@@ -335,7 +336,7 @@ class CoverageEnv(MultiAgentEnv):
             agents_pos_map[agent.position[Y], agent.position[X]] = agent.agent_id
         global_state = np.stack([self.map.map, self.map.coverage > 0, agents_pos_map], axis=-1)
         # use axis=-1 (because tensor(batch, width, hight, channel)
-        if self.merge:
+        if self.merge and not self.map_known:
             state = {
                 'agent_0': tuple(
                     [local_merge_state,
