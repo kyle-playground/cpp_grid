@@ -195,7 +195,7 @@ if __name__ == "__main__":
         ray.init()
     else:
         # For server
-        ray.init(num_cpus=16, num_gpus=3)
+        ray.init(num_cpus=16, num_gpus=1)
 
     args = parser.parse_args()
     with open('config.yaml', "rb") as config_file:

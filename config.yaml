@@ -11,15 +11,16 @@ sgd_minibatch_size: 800
 num_sgd_iter: 4
 num_workers: 8
 num_envs_per_worker: 4
-lr: 5.0e-4
+lr: 5.0e-3
 gamma: 0.99
-batch_mode: truncate_episodes
+batch_mode: complete_episodes
+num_gpus: 1
 num_cpus_per_worker: 1
 model:
     custom_model: cc_model
-    post_fcnet_hiddens: [64,64]
+    post_fcnet_hiddens: [128,128]
     post_fcnet_activation: relu
-    conv_filters: [[16, [4, 4], 2], [32, [4, 4], 2], [64, [3, 3], 2], [128, [3, 3], 1]]
+    conv_filters: [[64, [4, 4], 2], [128, [4, 4], 2], [256, [3, 3], 2], [512, [3, 3], 1]]
     conv_activation: relu
     vf_share_layers: False
 env_config:
