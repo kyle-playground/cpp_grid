@@ -1,4 +1,4 @@
-t# cpp_grid [use rllib]  Task failed (2021.08.23)
+t# cpp_grid [use rllib] (2021.08.23)
 Environment code modified from https://github.com/proroklab/adversarial_comms
 
 Coverage Path Planning based on reinforcement learning for three explorers in unknown obstacle grid world.
@@ -18,6 +18,8 @@ Local map and local coverage (2) from all agents (3), and self-aware position (X
 Global map, global coverage, and agent position map + Actions from all agents:
 
 <img width="250" alt="Screen Shot 2021-08-23 at 2 26 19 PM" src="https://user-images.githubusercontent.com/64893909/130401129-75278716-f438-46b9-bc34-38e8da7e90f9.png"><img width="250" alt="Screen Shot 2021-08-23 at 2 26 14 PM" src="https://user-images.githubusercontent.com/64893909/130401147-0a883abc-9206-4a04-8ea4-174f9b89a1a0.png"><img width="250" alt="Screen Shot 2021-08-23 at 2 26 03 PM" src="https://user-images.githubusercontent.com/64893909/130401151-6ad51fe3-512f-4359-8c17-d5b15447e6cc.png">
+
+## Result
 
 ![result](https://user-images.githubusercontent.com/64893909/131295874-f5e20e75-fabb-4964-b23c-50620b4772de.gif)
 
