@@ -20,6 +20,7 @@ from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
 DEFAULT_OPTIONS = {
     'world_shape': [24, 24],
+    'state_size': 48,
     'FOV': [5, 5],
     'termination_no_new_coverage': 10,
     'max_episode_len': -1,
@@ -27,7 +28,7 @@ DEFAULT_OPTIONS = {
     "n_agents": 3,
     "merge": True,
     "revisit_penalty": False,
-    "map_known": True
+    "map_known": True,
 }
 
 X = 1
@@ -101,8 +102,9 @@ class Explorer(object):
                  agent_index,
                  gridworld,
                  fov,
+                 penalty=False,
+                 whole_map=False,
                  ):
-
         self.agent_id = agent_index
         self.gridworld = gridworld
         self.FOV = fov
@@ -116,6 +118,8 @@ class Explorer(object):
         self.termination_no_new_coverage = 10
         self.step_reward = None
         self.total_reward = 0
+        self.penalty_switch = penalty
+        self.whole_map = whole_map
         self.reset(random_state)
 
     def reset(self, random_state):
@@ -162,7 +166,10 @@ class Explorer(object):
             self.step_reward = 1
             self.no_new_coverage_steps = 0
         else:
-            self.step_reward = -0.2
+            if self.penalty_switch:
+                self.step_reward = -0.2
+            else:
+                self.step_reward = 0
             self.revisit += 1
             self.no_new_coverage_steps += 1
 
@@ -172,66 +179,74 @@ class Explorer(object):
 
     def update_state(self):
         coverage = self.coverage.copy().astype(np.int)
-        clip_boundary = lambda b: np.clip(b, [0,0], self.gridworld.map.shape)
+
+        clip_boundary = lambda b: np.clip(b, [0, 0], self.gridworld.map.shape)
         bound_l = clip_boundary(self.position - (self.FOV - 1) / 2)
         bound_u = clip_boundary(self.position + (self.FOV - 1) / 2) + 1
 
-        self.local_map[int(bound_l[Y]):int(bound_u[Y]), int(bound_l[X]):int(bound_u[X])] = self.gridworld.map.world[int(bound_l[Y]):int(bound_u[Y]), int(bound_l[X]):int(bound_u[X])]
+        if self.whole_map:
+            self.local_map = self.gridworld.map.world
+        else:
+            self.local_map[int(bound_l[Y]):int(bound_u[Y]), int(bound_l[X]):int(bound_u[X])] = self.gridworld.map.world[int(bound_l[Y]):int(bound_u[Y]),int(bound_l[X]):int(bound_u[X])]
 
         state_data = [
             self.local_map,
             coverage,
         ]
-        self.state = np.stack(state_data, axis=-1).astype(np.int)
+        self.state = copy.deepcopy(state_data)
         done = self.no_new_coverage_steps == self.termination_no_new_coverage
         info = self.revisit
 
         return self.state, self.step_reward, done, info
 
+    def to_coordinate_frame(self, m, output_shape, fill=0):
+        half_out_shape = np.array(output_shape / 2, dtype=np.int)
+        padded = np.pad(m, ([half_out_shape[Y]] * 2, [half_out_shape[X]] * 2), mode='constant', constant_values=fill)
+        return padded[self.position[Y]:self.position[Y] + output_shape[Y], self.position[X]:self.position[X] + output_shape[Y]]
 
 class CoverageEnv(MultiAgentEnv):
-    # TODO: take revisited areas in consideration
     single_agent_merge_obs_space = spaces.Tuple(
-                [spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape'] + [2]),
+                [spaces.Box(np.float32(-1), np.float32(5), shape=(DEFAULT_OPTIONS['state_size'], DEFAULT_OPTIONS['state_size'], 2)),
                  spaces.Box(low=np.array([-1, -1, -1] * DEFAULT_OPTIONS['n_agents']),
                             high=np.array([DEFAULT_OPTIONS['world_shape'][Y], DEFAULT_OPTIONS['world_shape'][X], 2] * DEFAULT_OPTIONS['n_agents'])),
                  spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape']+[3]),
                  ])
     single_agent_observation_space = spaces.Tuple(
-                [spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape'] + [2]),
+                [spaces.Box(np.float32(-1), np.float32(5), shape=(DEFAULT_OPTIONS['state_size'], DEFAULT_OPTIONS['state_size'], 2)),
                  spaces.Box(low=np.array([-1, -1, -1] * DEFAULT_OPTIONS['n_agents']),
                             high=np.array([DEFAULT_OPTIONS['world_shape'][Y], DEFAULT_OPTIONS['world_shape'][X], 2] * DEFAULT_OPTIONS['n_agents'])),
                  spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape']+[3]),
-                 spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape'] + [2]),
-                 spaces.Box(np.float32(-1), np.float32(5), shape=DEFAULT_OPTIONS['world_shape'] + [2]),
+                 spaces.Box(np.float32(-1), np.float32(5), shape=(DEFAULT_OPTIONS['state_size'], DEFAULT_OPTIONS['state_size'], 2)),
+                 spaces.Box(np.float32(-1), np.float32(5), shape=(DEFAULT_OPTIONS['state_size'], DEFAULT_OPTIONS['state_size'], 2)),
                  ])
     single_agent_action_space = spaces.Discrete(5)
 
     def __init__(self, env_config=DEFAULT_OPTIONS):
-        # EzPickle.__init__(self)
-        self.cfg = copy.deepcopy(DEFAULT_OPTIONS)
+        self.cfg = {}
         self.cfg.update(env_config)
         self.agent_random_state, seed_agents = seeding.np_random()
         self.map = GridWorld(self.cfg['world_shape'])
-        self.team = []
-        for i in range(self.cfg['n_agents']):
-            self.team.append(Explorer(self.agent_random_state, i+1, self, np.array(self.cfg['FOV'])))
+        self.state_size = self.cfg['state_size']
         self.timestep = None
         self.termination = None
+        # Explorers
+        self.team = []
+        for i in range(self.cfg['n_agents']):
+            self.team.append(Explorer(self.agent_random_state,
+                                      i+1,  # agent index
+                                      self,
+                                      np.array(self.cfg['FOV']),
+                                      self.cfg["revisit_penalty"],
+                                      self.cfg["map_known"]))
         # Optional setting for environment
         self.merge = self.cfg["merge"]
-        self.penalty_switch = self.cfg["revisit_penalty"]
-
-        self.map_known = self.cfg["map_known"]
-        if self.map_known:
-            assert self.merge, "map_know set True only if merge is True"
 
         # Performance evaluation
         self.total_reward = 0
 
         if self.merge:
             self.observation_space = spaces.Tuple(
-                [spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape'] + [2]),
+                [spaces.Box(np.float32(-1), np.float32(5), shape=(DEFAULT_OPTIONS['state_size'], DEFAULT_OPTIONS['state_size'], 2)),
                  spaces.Box(low=np.array([-1, -1, -1] * self.cfg['n_agents']),
                             high=np.array(
                                 [self.cfg['world_shape'][Y], self.cfg['world_shape'][X], 2] * self.cfg['n_agents'])),
@@ -239,13 +254,13 @@ class CoverageEnv(MultiAgentEnv):
                  ])
         else:
             self.observation_space = spaces.Tuple(
-                [spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape'] + [2]),
+                [spaces.Box(np.float32(-1), np.float32(5), shape=(DEFAULT_OPTIONS['state_size'], DEFAULT_OPTIONS['state_size'], 2)),
                  spaces.Box(low=np.array([-1, -1, -1] * self.cfg['n_agents']),
                             high=np.array(
                                 [self.cfg['world_shape'][Y], self.cfg['world_shape'][X], 2] * self.cfg['n_agents'])),
                  spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape'] + [3]),
-                 spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape'] + [2]),
-                 spaces.Box(np.float32(-1), np.float32(5), shape=self.cfg['world_shape'] + [2]),
+                 spaces.Box(np.float32(-1), np.float32(5), shape=(DEFAULT_OPTIONS['state_size'], DEFAULT_OPTIONS['state_size'], 2)),
+                 spaces.Box(np.float32(-1), np.float32(5), shape=(DEFAULT_OPTIONS['state_size'], DEFAULT_OPTIONS['state_size'], 2)),
                  ])
 
         self.action_space = spaces.Discrete(5)
@@ -270,6 +285,7 @@ class CoverageEnv(MultiAgentEnv):
         self.map.reset()
         self.termination = int(self.map.all_coverable_area / 3) + 10
         self.total_reward = 0
+        self.local_map_merge = np.ones(self.map.shape) * 2
         for agent in self.team:
             agent.reset(self.agent_random_state)
 
@@ -295,37 +311,36 @@ class CoverageEnv(MultiAgentEnv):
 
         states, dones, rewards, revisits = [], [], [], []
         total_rewards_per_step = 0
-        if self.merge:
-            local_map_merge = np.ones(self.map.shape) * 2
+        state_output_shape = np.array([self.state_size] * 2, dtype=int)
+        # if self.merge:
+        #     local_map_merge = np.ones(self.map.shape) * 2
 
         for i, agent in enumerate(self.team):
             state, reward, done, info = agent.update_state()
-            if self.merge:
-                local_map = state[..., 0]
+            if self.merge and not self.cfg["map_known"]:
+                local_map = copy.deepcopy(state[0])
                 local_known_area = (local_map < 2)
-                known_last_merge = (local_map_merge < 2)
+                known_last_merge = (self.local_map_merge < 2)
                 known_area = known_last_merge.astype(np.int) + local_known_area.astype(np.int)
                 unknown_merge = (known_area == 0)
                 local_map[local_map == 2] = 0
-                local_map_merge[local_map_merge == 2] = 0
-                known_area_merge = (local_map_merge.astype(np.bool) | local_map.astype(np.bool))
-                local_map_merge = known_area_merge.astype(np.int) + unknown_merge.astype(np.int) * 2
-            else:
-                states.append(state)
-            if (not self.penalty_switch) & (reward < 0):
-                reward = 0
+                self.local_map_merge[self.local_map_merge == 2] = 0
+                known_area_merge = (self.local_map_merge.astype(np.bool) | local_map.astype(np.bool))
+                self.local_map_merge = known_area_merge.astype(np.int) + unknown_merge.astype(np.int) * 2
+                state[0] = copy.deepcopy(self.local_map_merge)
+            centered_state = []
+            for i, s in enumerate(state):
+                if self.merge & i == 1:
+                    s = self.map.coverage > 0
+                centered_state.append(agent.to_coordinate_frame(s, state_output_shape, fill=1))
+            state = np.stack(centered_state, axis=-1).astype(np.int)
+            states.append(state)
             rewards.append(reward)
             total_rewards_per_step += reward
             revisits.append(info)
             dones.append(done)
 
         self.total_reward += total_rewards_per_step
-
-        if self.merge:
-            local_merge_state = np.stack([local_map_merge, self.map.coverage > 0], axis=-1)
-
-        if self.map_known:
-            map_known_state = np.stack([self.map.map, self.map.coverage > 0], axis=-1)
 
         world_terminator = self.timestep == self.termination or self.map.get_coverage_fraction() == 1.0
         # all_done = all(dones) or world_terminator
@@ -336,48 +351,25 @@ class CoverageEnv(MultiAgentEnv):
             agents_pos_map[agent.position[Y], agent.position[X]] = agent.agent_id
         global_state = np.stack([self.map.map, self.map.coverage > 0, agents_pos_map], axis=-1)
         # use axis=-1 (because tensor(batch, width, hight, channel)
-        if self.merge and not self.map_known:
+
+        if self.merge or self.cfg["map_known"]:
             state = {
                 'agent_0': tuple(
-                    [local_merge_state,
+                    [states[0],
                      np.concatenate((np.append(self.team[0].position, 1),
                                      np.append(self.team[1].position, 0),
                                      np.append(self.team[2].position, 0)), axis=0),
                      global_state,
                      ]),
                 'agent_1': tuple(
-                    [local_merge_state,
+                    [states[1],
                      np.concatenate((np.append(self.team[1].position, 1),
                                      np.append(self.team[0].position, 0),
                                      np.append(self.team[2].position, 0)), axis=0),
                      global_state,
                      ]),
                 'agent_2': tuple(
-                    [local_merge_state,
-                     np.concatenate((np.append(self.team[2].position, 1),
-                                     np.append(self.team[0].position, 0),
-                                     np.append(self.team[1].position, 0)), axis=0),
-                     global_state,
-                     ]),
-            }
-        elif self.map_known:
-            state = {
-                'agent_0': tuple(
-                    [map_known_state,
-                     np.concatenate((np.append(self.team[0].position, 1),
-                                     np.append(self.team[1].position, 0),
-                                     np.append(self.team[2].position, 0)), axis=0),
-                     global_state,
-                     ]),
-                'agent_1': tuple(
-                    [map_known_state,
-                     np.concatenate((np.append(self.team[1].position, 1),
-                                     np.append(self.team[0].position, 0),
-                                     np.append(self.team[2].position, 0)), axis=0),
-                     global_state,
-                     ]),
-                'agent_2': tuple(
-                    [map_known_state,
+                    [states[2],
                      np.concatenate((np.append(self.team[2].position, 1),
                                      np.append(self.team[0].position, 0),
                                      np.append(self.team[1].position, 0)), axis=0),

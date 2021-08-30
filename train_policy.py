@@ -192,6 +192,7 @@ CCTrainer = PPOTrainer.with_updates(
 if __name__ == "__main__":
     mac_test = platform.system() == "Darwin"
     if mac_test:
+        print("mac_testing")
         ray.init()
     else:
         # For server
@@ -209,6 +210,7 @@ if __name__ == "__main__":
             "num_sgd_iter": 8,
             "num_workers": 1,
             "num_gpus_per_worker": 0,
+            "num_gpus": 0,
         }
         coverage_config.update(test_config)
 
@@ -216,7 +218,7 @@ if __name__ == "__main__":
     register_env("coverage", lambda config: CoverageEnv(config))
     ModelCatalog.register_custom_model("cc_model", ComplexInputNetworkandCentrailzedCritic)
     # Choose merge map or concatenation of compressed states
-    if coverage_config["env_config"]["merge"]:
+    if coverage_config["env_config"]["merge"] or coverage_config["env_config"]["map_known"]:
         config = {
             "multiagent": {
                 "policies": {
