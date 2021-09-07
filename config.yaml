@@ -7,12 +7,12 @@ kl_target: 0.01
 vf_loss_coeff: 0.1
 clip_param: 0.25
 rollout_fragment_length: 50
-train_batch_size: 3200
-sgd_minibatch_size: 800
+train_batch_size: 6400
+sgd_minibatch_size: 1600
 num_sgd_iter: 5
-num_workers: 8
-num_envs_per_worker: 8
-lr: 5.0e-5
+num_workers: 32
+num_envs_per_worker: 4
+lr: 5.0e-4
 gamma: 0.9
 batch_mode: complete_episodes
 num_gpus: 1
@@ -21,7 +21,7 @@ model:
     custom_model: cc_model
     post_fcnet_hiddens: [256, 256]
     post_fcnet_activation: relu
-    conv_filters: [[16, [5, 5], 1], [32, [5, 5], 1], [64, [3, 3], 1], [128, [3,3], 1]]
+    conv_filters: [[16, [5, 5], 2], [32, [5, 5], 1], [64, [3, 3], 1], [128, [3,3], 1]]
     conv_activation: relu
     vf_share_layers: False
 env_config:
@@ -32,7 +32,6 @@ env_config:
     max_episode_len: -1
     map_mode: known
     n_agents: 3
-    centered_state: False
+    centered_state: True
     revisit_penalty: True
-    agent_distance_penalty: True
 

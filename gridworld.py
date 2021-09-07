@@ -28,9 +28,8 @@ DEFAULT_OPTIONS = {
     'max_episode_len': -1,
     "map_mode": "known",
     "n_agents": 3,
-    "centered_state": False,
+    "centered_state": True,
     "revisit_penalty": True,
-    "agent_distance_penalty": False,
 }
 
 X = 1
@@ -54,9 +53,9 @@ class GridWorld(object):
         # Every agent start at origin every time
         self.coverage = np.zeros(self.shape, dtype=np.int)
         self.covered_count = np.zeros(self.shape)
-        self.map = self._random_obstacles_map(width=self.shape[0], height=self.shape[0], max_shapes=4, min_shapes=4,
-                                              max_size=3, min_size=2, allow_overlap=False, shape='ellipse')
-        # self.build_map(random_state)
+        # self.map = self._random_obstacles_map(width=self.shape[0], height=self.shape[0], max_shapes=4, min_shapes=4,
+        #                                       max_size=3, min_size=2, allow_overlap=False, shape='ellipse')
+        self.build_map(random_state)
         self.all_coverable_area = self.get_coverable_area()
 
     def get_coverable_area_faction(self):
@@ -222,6 +221,7 @@ class Explorer(object):
             self.step_reward += 1
             # self.no_new_coverage_steps = 0
         else:
+            self.gridworld.map.covered_count[self.position[Y], self.position[X]] += 0.1
             if self.revisit_penalty:
                 self.step_reward = -0.1
             else:
@@ -262,9 +262,10 @@ class Explorer(object):
 
 class CoverageEnv(MultiAgentEnv):
     single_agent_merge_obs_space = spaces.Tuple(
-        [spaces.Box(-10, 10, shape=DEFAULT_OPTIONS["world_shape"] + [3], dtype=np.float32),
+        [spaces.Box(-10, 10, shape=(DEFAULT_OPTIONS["state_size"], DEFAULT_OPTIONS["state_size"], 3), dtype=np.float32),
          spaces.Box(-10, 10, shape=DEFAULT_OPTIONS['world_shape'] + [3], dtype=np.float32),
          ])
+
     single_agent_action_space = spaces.Discrete(5)
 
     def __init__(self, env_config=DEFAULT_OPTIONS):
@@ -286,14 +287,18 @@ class CoverageEnv(MultiAgentEnv):
         self.termination = None
         # Options
         self.centering = self.cfg['centered_state']
-        self.too_close_penalty = self.cfg["agent_distance_penalty"]
         # Performance evaluation
         self.total_reward = 0
-
-        self.observation_space = spaces.Tuple(
-            [spaces.Box(-10, 10, shape=self.cfg["world_shape"] + [3], dtype=np.float32),
-             spaces.Box(-10, 10, shape=self.cfg['world_shape'] + [3], dtype=np.float32),
-             ])
+        if self.centering:
+            self.observation_space = spaces.Tuple(
+                [spaces.Box(-10, 10, shape=(self.cfg["state_size"], self.cfg["state_size"], 3), dtype=np.float32),
+                 spaces.Box(-10, 10, shape=self.cfg['world_shape'] + [3], dtype=np.float32),
+                 ])
+        else:
+            self.observation_space = spaces.Tuple(
+                [spaces.Box(-10, 10, shape=self.cfg["world_shape"] + [3], dtype=np.float32),
+                 spaces.Box(-10, 10, shape=self.cfg['world_shape'] + [3], dtype=np.float32),
+                 ])
         self.action_space = spaces.Discrete(5)
         # set color for rendering env
         self.fig = None
@@ -356,48 +361,7 @@ class CoverageEnv(MultiAgentEnv):
             revisits.append(info)
             dones.append(done)
         self.total_reward += total_rewards_per_step
-        '''
-        # Too-close penalty
-        radius = 3
-        if self.too_close_penalty:
-            position_list = [agent.position for _, agent in enumerate(self.team)]
-            for i in range(len(position_list) - 1):
-                for j in range(len(position_list) - 1 - i):
-                    distance = position_list[i] - position_list[self.cfg["n_agents"] - 1 - j]
-                    distance = sum(abs(distance))
-                    if distance < radius:
-                        self.total_reward -= 0.2
-        # Distance-priority map
-        distance_maps = []
-        for i, agent in enumerate(self.team):
-            distance_map = np.ones(self.map.shape) * -1
-            map_plus_coverage = self.map.map + self.map.coverage
-            free_indices = np.array(np.where(map_plus_coverage == 0))
-            for i in range(len(free_indices[0])):
-                y, x = free_indices[..., i]
-                distance_map[y][x] = self.solve_maze(agent.position, (y,x)) / 38.0
-                # distance_map[y][x] = sum(abs([y, x] - agent.position)) / 38.0
-            distance_maps.append(distance_map)
-        pri_distance_maps_0 = (distance_maps[0] - distance_maps[1] - distance_maps[2])
-        pri_distance_maps_1 = (distance_maps[1] - distance_maps[0] - distance_maps[2])
-        pri_distance_maps_2 = (distance_maps[2] - distance_maps[0] - distance_maps[1])
-        distance_maps = np.stack([pri_distance_maps_0, pri_distance_maps_1, pri_distance_maps_2])
-        # Agent-density map
-        density_map = np.zeros(self.map.shape, dtype=np.float32)
-        for i, agent in enumerate(self.team):
-            ay, ax = agent.position
-            for j in range(max(0, ay-radius), min(self.map.height, ay+radius)):
-                for k in range(max(0, ax-radius), min(self.map.width, ax+radius)):
-                    if sum(abs([j, k] - agent.position)) < radius:
-                        density_map[j][k] += 1
-        # Uncovered area density
-        uncovered_area = (self.map.coverage + self.map.map) == 0
-        uncovered_area = uncovered_area.astype(np.float32)
-        area_density_map = ndimage.uniform_filter(uncovered_area, size=5, mode='constant')
-        uncovered_density_map = (area_density_map* 2/3) * uncovered_area
-        # Distance-UncoveredArea Mixed
-        mixed_map = [uncovered_density_map + distance_maps[i] for i in range(len(distance_maps))]
-        '''
+
         # Agent-position map
         agent_pos_maps = [np.zeros(self.map.shape, dtype=np.float32) for _ in range(self.cfg["n_agents"])]
         agents_pos_map_g = np.zeros(self.map.shape, dtype=np.float32)
@@ -415,16 +379,20 @@ class CoverageEnv(MultiAgentEnv):
         # State stack (3)...(centered operation commented)
         agents_states = []
         for i, agent in enumerate(self.team):
-            agent_state = np.stack([self.map.map,
-                                    coverable_area,
-                                    agent_pos_maps[i]], axis=-1)
-            # if self.centering:
-            #     state_output_shape = np.array([self.cfg['state_size']] * 2, dtype=int)
-            #     agent_state_centered = []
-            #     for i, state in enumerate(agent_state):
-            #         centered_state = agent.to_coordinate_frame(state, state_output_shape, fill=0)
-            #         agent_state_centered.append(centered_state)
-            agents_states.append(agent_state)
+            agent_state = [map_cc,
+                           coverable_area,
+                           agent_pos_maps[i]]
+            if self.centering:
+                state_output_shape = np.array([self.cfg['state_size']] * 2, dtype=int)
+                agent_state_centered = []
+                for i, state in enumerate(agent_state):
+                    centered_state = agent.to_coordinate_frame(state, state_output_shape, fill=0)
+                    agent_state_centered.append(centered_state)
+                agent_state_centered = np.stack(agent_state_centered, axis=-1)
+                agents_states.append(agent_state_centered)
+            else:
+                agent_state = np.stack(agent_state, axis=-1)
+                agents_states.append(agent_state)
         # Global state (3)
         global_state = np.stack([self.map.map, self.map.covered_count, agents_pos_map_g > 0], axis=-1)
         # use axis=-1 (because tensor(batch, width, height, channel)

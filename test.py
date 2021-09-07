@@ -8,7 +8,7 @@ import numpy as np
 env = CoverageEnv()
 env.reset()
 
-for i in range(1):
+for i in range(100):
     act_dict = {
         "agent_0": np.random.randint(1, 5),
         "agent_1": np.random.randint(1, 5),

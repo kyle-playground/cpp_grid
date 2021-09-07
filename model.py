@@ -74,7 +74,7 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
                     self.add_module("cnn_local", cnn)
                 elif i == 1:
                     config = {
-                        "conv_filters": [[32, [5, 5], 1], [64, [5, 5], 1], [128, [3, 3], 1], [256, [3, 3], 1]],
+                        "conv_filters": [[16, [5, 5], 1], [32, [5, 5], 1], [64, [3, 3], 1], [128, [3, 3], 1]],
                         "conv_activation": model_config.get("conv_activation"),
                         "post_fcnet_hiddens": [],
                     }
