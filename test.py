@@ -8,7 +8,7 @@ import numpy as np
 env = CoverageEnv()
 env.reset()
 
-for i in range(150):
+for i in range(1):
     act_dict = {
         "agent_0": np.random.randint(1, 5),
         "agent_1": np.random.randint(1, 5),
@@ -34,7 +34,7 @@ Mixed_map_1 = obs["agent_1"][0][..., 3]
 Mixed_map_2 = obs["agent_2"][0][..., 3]
 
 map = map_colormap(obs["agent_0"][1][..., 0])
-coverage = colors.ListedColormap(all_team_colors)(obs["agent_0"][1][..., 1])
+coverage = map_colormap(obs["agent_0"][1][..., 1])
 agent_d_map = colors.ListedColormap(all_team_colors)(obs["agent_0"][1][..., 2])
 
 

@@ -412,6 +412,7 @@ class CoverageEnv(MultiAgentEnv):
         for i, agent in enumerate(self.team):
             agent_state = np.stack([self.map.map,
                                     self.map.coverage,
+                                    agent_pos_maps[i],
                                     density_map,
                                     mixed_map[i]], axis=-1)
             # if self.centering:

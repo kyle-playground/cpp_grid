@@ -22,7 +22,7 @@ model:
     custom_model: cc_model
     post_fcnet_hiddens: [256, 256]
     post_fcnet_activation: relu
-    conv_filters: [[32, [5, 5], 1], [64, [5, 5], 1], [128, [3, 3], 1], [256, [3,3], 1]]
+    conv_filters: [[16, [5, 5], 1], [32, [5, 5], 1], [64, [3, 3], 1], [128, [3,3], 1]]
     conv_activation: relu
     vf_share_layers: False
 env_config:
