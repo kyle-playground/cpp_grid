@@ -1,7 +1,7 @@
 # cpp_grid (MA setting) [use rllib] (2021.08.23)
 Environment code modified from https://github.com/proroklab/adversarial_comms
 
-Coverage Path Planning based on reinforcement learning for three explorers in unknown obstacle grid world.
+Coverage Path Planning based on reinforcement learning for three explorers in unknown (or known) obstacle grid world.
 
 Agents share the same policy and infomation can be shared between agents.
 
