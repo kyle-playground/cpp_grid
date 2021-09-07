@@ -17,15 +17,13 @@ Map, Merged Coverage, Agent Density Map(radius=3), Distance-Boarder Mixed Map:
 ## Observation(state) for centralized critic:
 Map, Global Coverage, Agent Position Map(for revisitpenalty), Agent Density Map(avoid agent too close) and Actions from all agents:
 
-<img width="250" alt="Screen Shot 2021-09-07 at 11 43 13 AM" src="https://user-images.githubusercontent.com/64893909/132281556-00e19d3e-b6fd-4a8d-9b91-e75285eab94f.png">
-<img width="250" alt="Screen Shot 2021-09-07 at 11 43 20 AM" src="https://user-images.githubusercontent.com/64893909/132281559-99eedaf6-e707-4564-84db-a8ff374429d2.png">
-<img width="250" alt="Screen Shot 2021-09-07 at 11 43 27 AM" src="https://user-images.githubusercontent.com/64893909/132281563-de11b3b5-7ad6-4970-9e73-b590638d868b.png">
-<img width="250" alt="Screen Shot 2021-09-07 at 11 43 34 AM" src="https://user-images.githubusercontent.com/64893909/132281570-a54293e7-b171-4542-afc9-9d5cd89930fb.png">
+<img width="250" alt="Screen Shot 2021-09-07 at 11 43 13 AM" src="https://user-images.githubusercontent.com/64893909/132281556-00e19d3e-b6fd-4a8d-9b91-e75285eab94f.png"><img width="250" alt="Screen Shot 2021-09-07 at 11 43 20 AM" src="https://user-images.githubusercontent.com/64893909/132281559-99eedaf6-e707-4564-84db-a8ff374429d2.png"><img width="250" alt="Screen Shot 2021-09-07 at 11 43 27 AM" src="https://user-images.githubusercontent.com/64893909/132281563-de11b3b5-7ad6-4970-9e73-b590638d868b.png"><img width="250" alt="Screen Shot 2021-09-07 at 11 43 34 AM" src="https://user-images.githubusercontent.com/64893909/132281570-a54293e7-b171-4542-afc9-9d5cd89930fb.png">
 
 ## Distance-Boarder Mixed Map 
 Hope agent explore darker area first
 
 DBMM of agent1 (green)        DBMM of agent2 (blue)         DBMM og agent3 (purple)
+
 <img width="250" alt="Screen Shot 2021-09-07 at 11 43 41 AM" src="https://user-images.githubusercontent.com/64893909/132281671-ee0f4a59-2f86-41b7-a0a1-b90c147dd91b.png"><img width="250" alt="Screen Shot 2021-09-07 at 11 43 46 AM" src="https://user-images.githubusercontent.com/64893909/132281701-d43f33c5-663b-4dc2-8810-9accd4089cd2.png"><img width="250" alt="Screen Shot 2021-09-07 at 11 43 53 AM" src="https://user-images.githubusercontent.com/64893909/132281727-56edb0d2-04c9-408e-a619-398322d753f0.png">
 
 ## Result
