@@ -375,9 +375,6 @@ class CoverageEnv(MultiAgentEnv):
                 distance_map[y][x] = self.solve_maze(agent.position, (y,x)) / 38.0
                 # distance_map[y][x] = sum(abs([y, x] - agent.position)) / 38.0
             distance_maps.append(distance_map)
-        # pri_distance_maps_0 = ( - distance_maps[1] - distance_maps[2])
-        # pri_distance_maps_1 = ( - distance_maps[0] - distance_maps[2])
-        # pri_distance_maps_2 = ( - distance_maps[0] - distance_maps[1])
         pri_distance_maps_0 = (distance_maps[0] - distance_maps[1] - distance_maps[2])
         pri_distance_maps_1 = (distance_maps[1] - distance_maps[0] - distance_maps[2])
         pri_distance_maps_2 = (distance_maps[2] - distance_maps[0] - distance_maps[1])
@@ -411,7 +408,7 @@ class CoverageEnv(MultiAgentEnv):
         agents_states = []
         for i, agent in enumerate(self.team):
             agent_state = np.stack([self.map.map,
-                                    self.map.coverage,
+                                    self.map.coverage > 0,
                                     agent_pos_maps[i],
                                     density_map,
                                     mixed_map[i]], axis=-1)
