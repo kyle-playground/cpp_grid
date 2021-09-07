@@ -19,7 +19,7 @@ Map, Merged Coverage, Agent Density Map(radius=3), Distance-Border Cost Mixed Ma
 
 
 ## Observation(state) for centralized critic:
-Map, Global Coverage, Agent Position Map(for revisitpenalty), Agent Density Map(avoid agent too close) and Actions from all agents:
+Map, Global Coverage, Agent Position Map(for revisit penalty), Agent Density Map(for redundancy penalty) and Actions from all agents:
 
 <img width="250" alt="Screen Shot 2021-09-07 at 11 43 13 AM" src="https://user-images.githubusercontent.com/64893909/132281556-00e19d3e-b6fd-4a8d-9b91-e75285eab94f.png"><img width="250" alt="Screen Shot 2021-09-07 at 11 43 20 AM" src="https://user-images.githubusercontent.com/64893909/132281559-99eedaf6-e707-4564-84db-a8ff374429d2.png"><img width="250" alt="Screen Shot 2021-09-07 at 11 43 27 AM" src="https://user-images.githubusercontent.com/64893909/132281563-de11b3b5-7ad6-4970-9e73-b590638d868b.png"><img width="250" alt="Screen Shot 2021-09-07 at 11 43 34 AM" src="https://user-images.githubusercontent.com/64893909/132281570-a54293e7-b171-4542-afc9-9d5cd89930fb.png">
 
