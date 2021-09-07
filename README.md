@@ -3,7 +3,7 @@ Environment code modified from https://github.com/proroklab/adversarial_comms
 
 Coverage Path Planning based on reinforcement learning for three explorers in unknown obstacle grid world.
 
-Agents share the same policy and their observations(conv compressed) are concatenated for action inference assuming communication exists.
+Agents share the same policy and infomation can be shared between agents.
 
 PPO and centralized critic are adopted for the policy, the setting is overall a multi-agent task with an independent learner. 
 
