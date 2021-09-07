@@ -1,4 +1,4 @@
-# cpp_grid (MA setting) [use rllib] (2021.08.23)
+# cpp_grid (MA Heuristic setting) [use rllib] (2021.08.23)
 Environment code modified from https://github.com/proroklab/adversarial_comms
 
 Coverage Path Planning based on reinforcement learning for three explorers in unknown (or known) obstacle grid world.
