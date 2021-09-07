@@ -23,8 +23,10 @@ Map, Global Coverage, Agent Position Map(for revisitpenalty), Agent Density Map(
 Hope agent explore darker area first
 
 Pic1. DBCMM of agent1 (green)
+
 Pic2. DBCMM of agent2 (blue)
-Pic3. DBCMM og agent3 (purple)
+
+Pic3. DBCMM of agent3 (purple)
 
 <img width="250" alt="Screen Shot 2021-09-07 at 11 43 41 AM" src="https://user-images.githubusercontent.com/64893909/132281671-ee0f4a59-2f86-41b7-a0a1-b90c147dd91b.png"><img width="250" alt="Screen Shot 2021-09-07 at 11 43 46 AM" src="https://user-images.githubusercontent.com/64893909/132281701-d43f33c5-663b-4dc2-8810-9accd4089cd2.png"><img width="250" alt="Screen Shot 2021-09-07 at 11 43 53 AM" src="https://user-images.githubusercontent.com/64893909/132281727-56edb0d2-04c9-408e-a619-398322d753f0.png">
 
