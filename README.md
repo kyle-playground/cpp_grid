@@ -9,6 +9,7 @@ PPO and centralized critic are adopted for the policy, the setting is overall a 
 
 Reward = 1 if new grid, -0.2 if revisited
 
+### Map known for right now, experimenting phase 
 ## Observation(state) for policy:
 Map, Merged Coverage, Agent Density Map(radius=3), Distance-Boarder Cost Mixed Map:             
 
