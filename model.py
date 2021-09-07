@@ -14,16 +14,8 @@ from ray.rllib.utils.torch_ops import one_hot
 from ray.rllib.models.modelv2 import restore_original_dimensions
 
 torch, nn = try_import_torch()
-DEFAULT_OPTIONS = {
-    "fcnet_hiddens": [128, 128],
-    "fcnet_activation": "tanh",
-    "activation": "relu",
-    "conv_compression": 32,
-    "conv_filters":  [[8, [4, 4], 2], [16, [4, 4], 2], [32, [3, 3], 2]],
-    "value_conv_compression": 128,
-    "value_conv_filters":  [[8, [4, 4], 2], [16, [4, 4], 2], [32, [3, 3], 2]],
-    "conv_activation": "relu"
-}
+
+
 class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
     """TorchModelV2 concat'ing CNN outputs to flat input(s), followed by FC(s).
     Note: This model should be used for complex (Dict or Tuple) observation
@@ -77,12 +69,12 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
                         model_config=config,
                         framework="torch",
                         name="cnn_{}".format(i))
-                    concat_size += cnn.num_outputs * 25 # channel x final output shape
+                    concat_size += cnn.num_outputs * 144  # channel x final output shape
                     self.cnns[i] = cnn
                     self.add_module("cnn_local", cnn)
-                elif i == 2:
+                elif i == 1:
                     config = {
-                        "conv_filters": [[64, [4, 4], 2], [128, [4, 4], 2], [256, [3, 3], 2], [512, [3, 3], 1]],
+                        "conv_filters": [[32, [5, 5], 1], [64, [5, 5], 1], [128, [3, 3], 1], [256, [3, 3], 1]],
                         "conv_activation": model_config.get("conv_activation"),
                         "post_fcnet_hiddens": [],
                     }
@@ -93,12 +85,11 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
                         model_config=config,
                         framework="torch",
                         name="cnn_global")
-                    vf_concat_size = vf_cnn.num_outputs
+                    vf_concat_size = vf_cnn.num_outputs * 144
                     self.vf_cnns[i] = vf_cnn
                     self.add_module("cnn_global_critic", vf_cnn)
                 else:
-                    self.cnns[i] = self.cnns[0]
-                    concat_size += self.cnns[0].num_outputs
+                    print("unexpected input")
 
             # Discrete inputs -> One-hot encode.
             elif isinstance(component, Discrete):
@@ -130,13 +121,12 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
         self.logits_layer = None
         self.value_layer = None
         self._value_out = None
-
         if num_outputs:
             # Action-distribution head.
             self.logits_layer = SlimFC(
                 in_size=self.post_fc_stack.num_outputs,
                 out_size=num_outputs,
-                activation_fn=None,
+                activation_fn=nn.Softmax,
             )
             # Create the value branch model.
             self.value_layer = SlimFC(
@@ -197,7 +187,7 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
         original_obs = restore_original_dimensions(obs, self.original_space, "torch")
         outs = []
 
-        vf_cnn_out, _ = self.vf_cnns[2]({"obs": original_obs[2]})
+        vf_cnn_out, _ = self.vf_cnns[1]({"obs": original_obs[1]})
         outs.append(vf_cnn_out)
         flatten_self_acts = one_hot(action, self.action_space)
         outs.append(flatten_self_acts)

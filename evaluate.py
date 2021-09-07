@@ -88,10 +88,12 @@ def run_trial(trainer_class=CCTrainer, checkpoint_path=None, cfg_update={}, rend
             step += 1
             action_dict = {}
             for agent_id, obs in obs.items():
-                action_dict[agent_id] = trainer.compute_action(obs)
+                action_dict[agent_id] = trainer.compute_action(obs, policy_id="shared_policy" )
             obs, reward, done, info = env.step(action_dict)
-            if done["__all__"]:
+            if step == 500:
                 break
+            # if done["__all__"]:
+            #     break
             if render:
                 env.render()
         # print
@@ -111,13 +113,13 @@ def run_trial(trainer_class=CCTrainer, checkpoint_path=None, cfg_update={}, rend
 
             ax1.imshow(obs["agent_0"][0][..., 0])
             ax2.imshow(obs["agent_0"][0][..., 1])
-            ax3.imshow(obs["agent_1"][0][..., 0])
-            ax4.imshow(obs["agent_1"][0][..., 1])
-            ax5.imshow(obs["agent_2"][0][..., 0])
-            ax6.imshow(obs["agent_2"][0][..., 1])
-
-            ax7.imshow(obs["agent_0"][2][..., 0])
-            ax8.imshow(obs["agent_0"][2][..., 1])
+            # ax3.imshow(obs["agent_1"][0][..., 0])
+            # ax4.imshow(obs["agent_1"][0][..., 1])
+            # ax5.imshow(obs["agent_2"][0][..., 0])
+            # ax6.imshow(obs["agent_2"][0][..., 1])
+            #
+            # ax7.imshow(obs["agent_0"][2][..., 0])
+            # ax8.imshow(obs["agent_0"][2][..., 1])
             plt.show()
         if print_info:
             print("agent_0")
@@ -131,8 +133,8 @@ def run_trial(trainer_class=CCTrainer, checkpoint_path=None, cfg_update={}, rend
         raise
 
 if __name__ == "__main__":
-    checkpoint_path = "log/log/CCPPOTrainer_2021-08-23_15-04-19/CCPPOTrainer_coverage_55ea3_00000_0_2021-08-23_15-04-19/checkpoint_1502"
+    checkpoint_path = "log/CCPPOTrainer_2021-09-02_15-49-12/CCPPOTrainer_coverage_437d4_00000_0_2021-09-02_15-49-12/checkpoint_500"
     initialize()
-    run_trial(checkpoint_path=checkpoint_path, render=False)
+    run_trial(checkpoint_path=checkpoint_path, render=True)
 
 
