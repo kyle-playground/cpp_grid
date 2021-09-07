@@ -1,35 +1,38 @@
 framework: torch
 env: coverage
-lambda: 0.9
-entropy_coeff: 0.01
-kl_coeff: 0.2
+lambda: 0.95
+entropy_coeff: 0.001
+kl_coeff: 0.5
 kl_target: 0.01
-clip_param: 0.2
-rollout_fragment_length: 100
+vf_loss_coeff: 0.1
+clip_param: 0.25
+rollout_fragment_length: 50
 train_batch_size: 3200
 sgd_minibatch_size: 800
-num_sgd_iter: 4
+num_sgd_iter: 5
 num_workers: 8
-num_envs_per_worker: 4
-lr: 5.0e-4
-gamma: 0.99
-batch_mode: truncate_episodes
+num_envs_per_worker: 8
+lr: 5.0e-5
+gamma: 0.9
+batch_mode: complete_episodes
+num_gpus: 1
 num_cpus_per_worker: 1
 model:
     custom_model: cc_model
-    post_fcnet_hiddens: [64,64]
+    post_fcnet_hiddens: [256, 256]
     post_fcnet_activation: relu
-    conv_filters: [[16, [4, 4], 2], [32, [4, 4], 2], [64, [3, 3], 2], [128, [3, 3], 1]]
+    conv_filters: [[16, [5, 5], 1], [32, [5, 5], 1], [64, [3, 3], 1], [128, [3,3], 1]]
     conv_activation: relu
     vf_share_layers: False
 env_config:
-    world_shape: [24, 24]
+    world_shape: [14, 14]
+    state_size: 28
     FOV: [5, 5]
     termination_no_new_coverage: 10
     max_episode_len: -1
-    map_mode: random
+    map_mode: known
     n_agents: 3
-    merge: True
-    revisit_penalty: False
-    map_known: True
+    centered_state: False
+    revisit_penalty: True
+    agent_distance_penalty: True
 

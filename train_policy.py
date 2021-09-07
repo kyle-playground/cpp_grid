@@ -55,13 +55,13 @@ parser.add_argument(
 parser.add_argument(
     "--stop-timesteps",
     type=int,
-    default = 2000000,
+    default = 20000000,
     help="Number of timesteps to train.")
-parser.add_argument(
-    "--stop-iters",
-    type=int,
-    default=1000,
-    help="Number of iterations to train.")
+# parser.add_argument(
+#     "--stop-iters",
+#     type=int,
+#     default=100,
+#     help="Number of iterations to train.")
 # parser.add_argument(
 #     "--stop-reward",
 #     type=float,
@@ -195,7 +195,7 @@ if __name__ == "__main__":
         ray.init()
     else:
         # For server
-        ray.init(num_cpus=16, num_gpus=3)
+        ray.init(num_cpus=11, num_gpus=1)
 
     args = parser.parse_args()
     with open('config.yaml', "rb") as config_file:
@@ -215,32 +215,18 @@ if __name__ == "__main__":
     # Register custom model and environment
     register_env("coverage", lambda config: CoverageEnv(config))
     ModelCatalog.register_custom_model("cc_model", ComplexInputNetworkandCentrailzedCritic)
-    # Choose merge map or concatenation of compressed states
-    if coverage_config["env_config"]["merge"]:
-        config = {
-            "multiagent": {
-                "policies": {
-                    "shared_policy": (None, CoverageEnv.single_agent_merge_obs_space,
-                                      CoverageEnv.single_agent_action_space,
-                                      {"framework": "torch"}),
-                },
-                "policy_mapping_fn": (lambda aid: "shared_policy"),
-                "count_steps_by": "env_steps",
-            },
-        }
-    else:
-        config = {
-            "multiagent": {
-                "policies": {
-                    "shared_policy": (None, CoverageEnv.single_agent_observation_space,
-                                      CoverageEnv.single_agent_action_space,
-                                      {"framework": "torch"}),
-                },
-                "policy_mapping_fn": (lambda aid: "shared_policy"),
-                "count_steps_by": "env_steps",
-            },
-        }
 
+    config = {
+        "multiagent": {
+            "policies": {
+                "shared_policy": (None, CoverageEnv.single_agent_merge_obs_space,
+                                  CoverageEnv.single_agent_action_space,
+                                  {"framework": "torch"}),
+            },
+            "policy_mapping_fn": (lambda aid: "shared_policy"),
+            "count_steps_by": "env_steps",
+        },
+    }
     stop = {"timesteps_total": args.stop_timesteps}
 
     config.update(coverage_config)
@@ -248,8 +234,9 @@ if __name__ == "__main__":
     results = tune.run(CCTrainer,
                        config=config,
                        stop=stop,
-                       verbose=1,
+                       verbose=2,
                        local_dir="./log",
+                       checkpoint_freq=100,
                        checkpoint_at_end=True,   # add check point to save model
                        )
 
