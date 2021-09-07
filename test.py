@@ -23,15 +23,16 @@ hsv[..., 0] = np.linspace(160 / 360, 250 / 360, 3)
 team_agents_color = colors.hsv_to_rgb(hsv)
 all_team_colors = [(0, 0, 0, 0)] + [tuple(list(c) + [0.5]) for c in team_agents_color]
 
-map_colormap = colors.ListedColormap(['white', 'black', 'gray'])
+map_colormap = colors.ListedColormap(['white', 'black', 'grey'])
 
 local_map = map_colormap(obs["agent_0"][0][..., 0])
 local_coverage = map_colormap(obs["agent_0"][0][..., 1])
-agent_density_map = obs["agent_0"][0][..., 2]
+agent_pos_map = obs["agent_0"][0][..., 2]
+agent_density_map = obs["agent_0"][0][..., 3]
 
-Mixed_map_0 = obs["agent_0"][0][..., 3]
-Mixed_map_1 = obs["agent_1"][0][..., 3]
-Mixed_map_2 = obs["agent_2"][0][..., 3]
+Mixed_map_0 = obs["agent_0"][0][..., 4]
+Mixed_map_1 = obs["agent_1"][0][..., 4]
+Mixed_map_2 = obs["agent_2"][0][..., 4]
 
 map = map_colormap(obs["agent_0"][1][..., 0])
 coverage = map_colormap(obs["agent_0"][1][..., 1])

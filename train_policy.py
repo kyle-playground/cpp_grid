@@ -195,7 +195,7 @@ if __name__ == "__main__":
         ray.init()
     else:
         # For server
-        ray.init(num_cpus=16, num_gpus=1)
+        ray.init(num_cpus=35, num_gpus=1)
 
     args = parser.parse_args()
     with open('config.yaml', "rb") as config_file:
@@ -234,7 +234,7 @@ if __name__ == "__main__":
     results = tune.run(CCTrainer,
                        config=config,
                        stop=stop,
-                       verbose=2,
+                       verbose=1,
                        local_dir="./log",
                        checkpoint_freq=100,
                        checkpoint_at_end=True,   # add check point to save model

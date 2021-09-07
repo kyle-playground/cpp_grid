@@ -126,7 +126,7 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
             self.logits_layer = SlimFC(
                 in_size=self.post_fc_stack.num_outputs,
                 out_size=num_outputs,
-                activation_fn=nn.Softmax,
+                activation_fn=None,
             )
             # Create the value branch model.
             self.value_layer = SlimFC(

@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib
 from matplotlib import colors
-
+from torch.nn import modules
 import gym
 from gym import spaces
 from gym.utils import seeding
@@ -260,7 +260,7 @@ class Explorer(object):
 
 class CoverageEnv(MultiAgentEnv):
     single_agent_merge_obs_space = spaces.Tuple(
-        [spaces.Box(-10, 10, shape=DEFAULT_OPTIONS["world_shape"] + [4], dtype=np.float32),
+        [spaces.Box(-10, 10, shape=DEFAULT_OPTIONS["world_shape"] + [5], dtype=np.float32),
          spaces.Box(-10, 10, shape=DEFAULT_OPTIONS['world_shape'] + [4], dtype=np.float32),
          ])
     single_agent_action_space = spaces.Discrete(5)
@@ -268,7 +268,7 @@ class CoverageEnv(MultiAgentEnv):
     def __init__(self, env_config=DEFAULT_OPTIONS):
         self.cfg = {}
         self.cfg.update(env_config)
-        self.random_state, seed_agents = seeding.np_random(seed=1)
+        self.random_state, seed_agents = seeding.np_random()
 
         self.map = GridWorld(self.cfg['world_shape'], random_state=self.random_state)
         self.mazesolver = None  # A star
@@ -289,7 +289,7 @@ class CoverageEnv(MultiAgentEnv):
         self.total_reward = 0
 
         self.observation_space = spaces.Tuple(
-            [spaces.Box(-10, 10, shape=self.cfg["world_shape"] + [4], dtype=np.float32),
+            [spaces.Box(-10, 10, shape=self.cfg["world_shape"] + [5], dtype=np.float32),
              spaces.Box(-10, 10, shape=self.cfg['world_shape'] + [4], dtype=np.float32),
              ])
         self.action_space = spaces.Discrete(5)
@@ -407,7 +407,7 @@ class CoverageEnv(MultiAgentEnv):
                 else:
                     agent_pos_maps[j][agent.position[Y], agent.position[X]] = 1
             agents_pos_map_g[agent.position[Y], agent.position[X]] = agent.agent_id / 3.0
-        # State stack (4)...(centered operation commented)
+        # State stack (5)...(centered operation commented)
         agents_states = []
         for i, agent in enumerate(self.team):
             agent_state = np.stack([self.map.map,

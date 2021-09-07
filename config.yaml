@@ -7,10 +7,10 @@ kl_target: 0.01
 vf_loss_coeff: 0.1
 clip_param: 0.25
 rollout_fragment_length: 50
-train_batch_size: 1600
-sgd_minibatch_size: 800
+train_batch_size: 6400
+sgd_minibatch_size: 1600
 num_sgd_iter: 5
-num_workers: 8
+num_workers: 32
 num_envs_per_worker: 4
 observation_filter: MeanStdFilter
 lr: 5.0e-4
