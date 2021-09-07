@@ -9,7 +9,10 @@ PPO and centralized critic are adopted for the policy, the setting is overall a 
 
 ## Reward setting
 Reward = 1 if new grid, -0.2 if revisited
+
 Reward += -0.1 if two agents are too close (Intersect appear in density map)
+
+Reward += 0.1 if agent move toward the center of darker area
 
 ## Observation(state) for policy:
 #### Map remains known for right now (experimenting phase) 
