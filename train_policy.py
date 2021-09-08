@@ -11,14 +11,17 @@ modifies the environment.
 """
 
 import argparse
+import random
 import numpy as np
-from gym.spaces import Discrete
+from datetime import datetime
 import os
 import yaml
 import platform
+import pandas as pd
 
 import ray
 from ray import tune
+from ray.tune import sample_from
 from ray.tune.registry import register_env
 from ray.rllib.agents.ppo.ppo import PPOTrainer
 from ray.rllib.agents.ppo.ppo_torch_policy import PPOTorchPolicy, \
@@ -35,6 +38,7 @@ from ray.rllib.utils.framework import try_import_tf, try_import_torch
 from ray.rllib.utils.test_utils import check_learning_achieved
 from ray.rllib.utils.tf_ops import explained_variance, make_tf_callable
 from ray.rllib.utils.torch_ops import convert_to_torch_tensor
+from ray.tune.schedulers.pb2 import PB2
 
 from gridworld import CoverageEnv
 from model import ComplexInputNetworkandCentrailzedCritic
@@ -52,21 +56,15 @@ parser.add_argument(
     action="store_true",
     help="Whether this script should be run as a test: --stop-reward must "
     "be achieved within --stop-timesteps AND --stop-iters.")
+
+parser.add_argument("--max", type=int, default=10000000)
+parser.add_argument("--num_samples", type=int, default=4)
+parser.add_argument("--perturb", type=float, default=0.25)
+parser.add_argument("--t_ready", type=int, default=50000)
 parser.add_argument(
-    "--stop-timesteps",
-    type=int,
-    default = 20000000,
-    help="Number of timesteps to train.")
-# parser.add_argument(
-#     "--stop-iters",
-#     type=int,
-#     default=100,
-#     help="Number of iterations to train.")
-# parser.add_argument(
-#     "--stop-reward",
-#     type=float,
-#     default=7.99,
-#     help="Reward at which we stop training.")
+        "--criteria", type=str,
+        default="timesteps_total")
+
 
 class CentralizedValueMixin:
     """Add method to evaluate the central value function from the model."""
@@ -195,7 +193,7 @@ if __name__ == "__main__":
         ray.init()
     else:
         # For server
-        ray.init(num_cpus=35, num_gpus=1)
+        ray.init(num_cpus=40, num_gpus=4)
 
     args = parser.parse_args()
     with open('config.yaml', "rb") as config_file:
@@ -227,18 +225,57 @@ if __name__ == "__main__":
             "count_steps_by": "env_steps",
         },
     }
-    stop = {"timesteps_total": args.stop_timesteps}
-
     config.update(coverage_config)
 
-    results = tune.run(CCTrainer,
-                       config=config,
-                       stop=stop,
-                       verbose=1,
-                       local_dir="./log",
-                       checkpoint_freq=100,
-                       checkpoint_at_end=True,   # add check point to save model
-                       )
+    pb2 = PB2(
+        time_attr=args.criteria,
+        metric="episode_reward_mean",
+        mode="max",
+        perturbation_interval=args.t_ready,
+        quantile_fraction=args.perturb,  # copy bottom % with top %
+        # Specifies the hyperparam search space
+        hyperparam_bounds={
+            "lambda": [0.9, 1.0],
+            "clip_param": [0.1, 0.5],
+            "lr": [1e-4, 1e-7],
+            "train_batch_size": [1600, 6400]
+        })
+    tune_config = {
+        "lambda": sample_from(lambda spec: random.uniform(0.9, 1.0)),
+        "clip_param": sample_from(lambda spec: random.uniform(0.1, 0.5)),
+        "lr": sample_from(lambda spec: random.uniform(1e-4, 1e-7)),
+        "train_batch_size": sample_from(lambda spec: random.randint(1600, 6400)),
+    }
+    config.update(tune_config)
 
-    if args.as_test:
-        check_learning_achieved(results, args.stop_reward)
+    args.dir = "cpp_pb2_Size{}".format(str(args.num_samples))
+
+    timelog = str(datetime.date(datetime.now())) + "_" + str(
+        datetime.time(datetime.now()))
+
+    analysis = tune.run(CCTrainer,
+                        name="cpp_pb2_{}".format(timelog),
+                        scheduler=pb2,
+                        num_samples=args.num_samples,
+                        config=config,
+                        stop={args.criteria: args.max},
+                        verbose=1,
+                        local_dir="./log",
+                        checkpoint_at_end=True,   # add check point to save model
+                        )
+
+    all_dfs = analysis.trial_dataframes
+    names = list(all_dfs.keys())
+
+    results = pd.DataFrame()
+    for i in range(args.num_samples):
+        df = all_dfs[names[i]]
+        df = df[[
+            "timesteps_total", "episodes_total", "episode_reward_mean",
+        ]]
+        results = pd.concat([results, df]).reset_index(drop=True)
+
+    if args.save_csv:
+        if not (os.path.exists("log/" + args.dir)):
+            os.makedirs("log/" + args.dir)
+        results.to_csv("log/{}/cpp_pb2.csv".format(args.dir))

@@ -8,15 +8,16 @@ vf_loss_coeff: 0.1
 clip_param: 0.25
 rollout_fragment_length: 50
 train_batch_size: 6400
-sgd_minibatch_size: 1600
+sgd_minibatch_size: 400
 num_sgd_iter: 5
-num_workers: 32
+num_workers: 8
 num_envs_per_worker: 4
-lr: 5.0e-4
-gamma: 0.9
+lr: 5.0e-5
+gamma: 0.95
 batch_mode: complete_episodes
-num_gpus: 1
+num_gpus: 0.9
 num_cpus_per_worker: 1
+log_level: INFO
 model:
     custom_model: cc_model
     post_fcnet_hiddens: [256, 256]
