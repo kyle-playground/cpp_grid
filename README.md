@@ -1,4 +1,4 @@
-# cpp_grid (Original intention) [use rllib] (2021.09.07)
+# cpp_grid (Original intention) [use rllib] (2021.09.09)
 Environment code modified from https://github.com/proroklab/adversarial_comms
 
 Coverage Path Planning based on reinforcement learning for three explorers in unknown (or known) obstacle grid world.
@@ -28,3 +28,4 @@ Map, Covered Density Map (lighter place being covered more), Agent Position Map
 
 ## Result
 
+![Screen Recording 2021-09-09 at 11 50 12 AM](https://user-images.githubusercontent.com/64893909/132619565-377f04e2-6382-4faf-a049-c036b4d5d5f8.gif)
