@@ -24,9 +24,7 @@ Map, Coverable Area, Agent Position Map: (All centered)
 Map, Covered Density Map (lighter place being covered more), Agent Position Map
 + Actions from all agents:
 </pre>
-<img width="250" alt="Screen Shot 2021-09-09 at 11 29 28 AM" src="https://user-images.githubusercontent.com/64893909/132618071-8060f88a-ad6c-4f2a-a14e-959aa2b3c55c.png">
-<img width="250" alt="Screen Shot 2021-09-09 at 11 29 33 AM" src="https://user-images.githubusercontent.com/64893909/132618074-121eaeee-5cf2-440d-8a79-51dddf232b5b.png">
-<img width="250" alt="Screen Shot 2021-09-09 at 11 29 40 AM" src="https://user-images.githubusercontent.com/64893909/132618080-1fe7f18a-df0e-4c73-b3b4-c0c07ef68417.png">
+<img width="250" alt="Screen Shot 2021-09-09 at 11 29 28 AM" src="https://user-images.githubusercontent.com/64893909/132618071-8060f88a-ad6c-4f2a-a14e-959aa2b3c55c.png"><img width="250" alt="Screen Shot 2021-09-09 at 11 29 33 AM" src="https://user-images.githubusercontent.com/64893909/132618074-121eaeee-5cf2-440d-8a79-51dddf232b5b.png"><img width="250" alt="Screen Shot 2021-09-09 at 11 29 40 AM" src="https://user-images.githubusercontent.com/64893909/132618080-1fe7f18a-df0e-4c73-b3b4-c0c07ef68417.png">
 
 ## Result
 
