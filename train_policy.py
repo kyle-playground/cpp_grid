@@ -237,14 +237,12 @@ if __name__ == "__main__":
         hyperparam_bounds={
             "lambda": [0.9, 1.0],
             "clip_param": [0.1, 0.5],
-            "lr": [1e-4, 1e-7],
-            "train_batch_size": [1600, 6400]
+            "lr": [5e-5, 1e-7],
         })
     tune_config = {
         "lambda": sample_from(lambda spec: random.uniform(0.9, 1.0)),
-        "clip_param": sample_from(lambda spec: random.uniform(0.1, 0.5)),
-        "lr": sample_from(lambda spec: random.uniform(1e-4, 1e-7)),
-        "train_batch_size": sample_from(lambda spec: random.randint(1600, 6400)),
+        "clip_param": sample_from(lambda spec: random.uniform(0.1, 0.3)),
+        "lr": sample_from(lambda spec: random.uniform(5e-5, 1e-7)),
     }
     config.update(tune_config)
 

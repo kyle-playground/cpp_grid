@@ -135,11 +135,12 @@ class MazeSolver(AStar):
 
 
 class Action(Enum):
-    FREEZE     = 0
-    MOVE_RIGHT = 1
-    MOVE_LEFT  = 2
-    MOVE_UP    = 3
-    MOVE_DOWN  = 4
+    MOVE_RIGHT = 0
+    MOVE_LEFT  = 1
+    MOVE_UP    = 2
+    MOVE_DOWN  = 3
+    FREEZE     = 4
+
 
 
 class Explorer(object):
@@ -217,15 +218,15 @@ class Explorer(object):
 
         if self.gridworld.map.coverage[self.position[Y], self.position[X]] == 0:
             self.gridworld.map.coverage[self.position[Y], self.position[X]] = self.agent_id
-            self.gridworld.map.covered_count[self.position[Y], self.position[X]] += 0.1
+            # self.gridworld.map.covered_count[self.position[Y], self.position[X]] += 0.1
             self.step_reward += 1
             # self.no_new_coverage_steps = 0
         else:
-            self.gridworld.map.covered_count[self.position[Y], self.position[X]] += 0.1
-            if self.revisit_penalty:
-                self.step_reward = -0.1
-            else:
-                self.step_reward += 0
+            # self.gridworld.map.covered_count[self.position[Y], self.position[X]] += 0.1
+            # if self.revisit_penalty:
+            #     self.step_reward = -0.2
+            # else:
+            #     self.step_reward += 0
             self.revisit += 1
             # self.no_new_coverage_steps += 1
 
@@ -264,9 +265,10 @@ class CoverageEnv(MultiAgentEnv):
     single_agent_merge_obs_space = spaces.Tuple(
         [spaces.Box(-10, 10, shape=(DEFAULT_OPTIONS["state_size"], DEFAULT_OPTIONS["state_size"], 3), dtype=np.float32),
          spaces.Box(-10, 10, shape=DEFAULT_OPTIONS['world_shape'] + [3], dtype=np.float32),
+         spaces.Box(-1, 2, shape=(4,), dtype=np.float32)
          ])
 
-    single_agent_action_space = spaces.Discrete(5)
+    single_agent_action_space = spaces.Discrete(4)
 
     def __init__(self, env_config=DEFAULT_OPTIONS):
         self.cfg = {}
@@ -293,13 +295,15 @@ class CoverageEnv(MultiAgentEnv):
             self.observation_space = spaces.Tuple(
                 [spaces.Box(-10, 10, shape=(self.cfg["state_size"], self.cfg["state_size"], 3), dtype=np.float32),
                  spaces.Box(-10, 10, shape=self.cfg['world_shape'] + [3], dtype=np.float32),
+                 spaces.Box(-1,2, shape=(4,), dtype=np.float32)
                  ])
         else:
             self.observation_space = spaces.Tuple(
                 [spaces.Box(-10, 10, shape=self.cfg["world_shape"] + [3], dtype=np.float32),
                  spaces.Box(-10, 10, shape=self.cfg['world_shape'] + [3], dtype=np.float32),
+                 spaces.Box(-1, 2, shape=(4,), dtype=np.float32)
                  ])
-        self.action_space = spaces.Discrete(5)
+        self.action_space = spaces.Discrete(4)
         # set color for rendering env
         self.fig = None
         self.map_colormap = colors.ListedColormap(['white', 'black', 'gray'])
@@ -394,20 +398,35 @@ class CoverageEnv(MultiAgentEnv):
                 agent_state = np.stack(agent_state, axis=-1)
                 agents_states.append(agent_state)
         # Global state (3)
-        global_state = np.stack([self.map.map, self.map.covered_count, agents_pos_map_g > 0], axis=-1)
+        global_state = np.stack([self.map.map, self.map.coverage > 0, agents_pos_map_g > 0], axis=-1)
         # use axis=-1 (because tensor(batch, width, height, channel)
+        # Action masking
+        is_valid_pos = lambda p: all([p[c] >= 0 and p[c] < self.map.shape[c] for c in [Y, X]])
+        is_obstacle = lambda p: self.map.map[p[Y]][p[X]] == 1
+        delta_pos = [[0, 1],
+                     [0, -1],
+                     [-1, 0],
+                     [1, 0]]
+        action_masks = []
+        for _, agent in enumerate(self.team):
+            mask = [1 if is_valid_pos(agent.position+delta_pos[i]) and not is_obstacle(agent.position+delta_pos[i]) else 0 for i in range(len(delta_pos))]
+            action_masks.append(mask)
+
         state = {
             'agent_0': tuple(
                 [agents_states[0],
                  global_state,
+                 action_masks[0]
                  ]),
             'agent_1': tuple(
                 [agents_states[1],
                  global_state,
+                 action_masks[1]
                  ]),
             'agent_2': tuple(
                 [agents_states[2],
                  global_state,
+                 action_masks[2]
                  ]),
         }
         reward = {

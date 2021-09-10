@@ -12,7 +12,7 @@ from ray.rllib.utils.annotations import override
 from ray.rllib.utils.framework import try_import_torch
 from ray.rllib.utils.torch_ops import one_hot
 from ray.rllib.models.modelv2 import restore_original_dimensions
-
+from ray.rllib.utils.torch_ops import FLOAT_MIN
 torch, nn = try_import_torch()
 
 
@@ -94,11 +94,11 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
             # Discrete inputs -> One-hot encode.
             elif isinstance(component, Discrete):
                 self.one_hot[i] = True
-                concat_size += component.n
+                # concat_size += component.n
             # Everything else (1D Box).
             else:
                 self.flatten[i] = int(np.product(component.shape))
-                concat_size += self.flatten[i]
+                # concat_size += self.flatten[i]
 
         # Optional post-concat FC-stack.
         post_fc_stack_config = {
@@ -167,7 +167,7 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
                 cnn_out, _ = self.cnns[i]({"obs": component})
                 outs.append(cnn_out)
             elif i in self.flatten:
-                outs.append(torch.reshape(component, [-1, self.flatten[i]]))
+                mask = component
 
         # Concat all outputs and the non-image inputs.
         out = torch.cat(outs, dim=1)
@@ -180,6 +180,7 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
 
         # Logits- and value branches.
         logits, values = self.logits_layer(out), self.value_layer(out)
+        inf_mask = torch.clamp(torch.log(mask), FLOAT_MIN)
         self._value_out = torch.reshape(values, [-1])
         return logits, []
 
