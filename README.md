@@ -28,4 +28,8 @@ Map, Covered Density Map (lighter place being covered more), Agent Position Map
 
 ## Result
 
-![Screen Recording 2021-09-09 at 11 50 12 AM](https://user-images.githubusercontent.com/64893909/132619565-377f04e2-6382-4faf-a049-c036b4d5d5f8.gif)
+![Untitled](https://user-images.githubusercontent.com/64893909/132844660-1924d69f-021a-4e59-bc3c-6e733a348ad0.gif)
+
+max reward: 118
+
+![Screenshot 2021-09-10 17_44_26](https://user-images.githubusercontent.com/64893909/132844721-91ad5c95-225e-41a7-b7d0-fb75ff91fb30.png)
