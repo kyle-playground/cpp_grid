@@ -13,7 +13,7 @@ num_sgd_iter: 5
 num_workers: 8
 num_envs_per_worker: 4
 lr: 5.0e-5
-gamma: 0.95
+gamma: 0.99
 batch_mode: complete_episodes
 num_gpus: 0.9
 num_cpus_per_worker: 1

@@ -206,6 +206,7 @@ if __name__ == "__main__":
             "sgd_minibatch_size": 8,
             "num_sgd_iter": 8,
             "num_workers": 1,
+            "num_gpus": 0,
             "num_gpus_per_worker": 0,
         }
         coverage_config.update(test_config)
@@ -233,7 +234,7 @@ if __name__ == "__main__":
         mode="max",
         perturbation_interval=args.t_ready,
         quantile_fraction=args.perturb,  # copy bottom % with top %
-        # Specifies the hyperparam search space
+    #     Specifies the hyperparam search space
         hyperparam_bounds={
             "lambda": [0.9, 1.0],
             "clip_param": [0.1, 0.5],

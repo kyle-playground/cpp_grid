@@ -139,7 +139,7 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
 
         # Centralized critic post fc layer
         # one-shot (Discrete action space)
-        vf_concat_size += 5 * self.n_agents
+        vf_concat_size += 4 * self.n_agents
 
         self.vf_post_fc_stack = ModelCatalog.get_model_v2(
             Box(float("-inf"),
@@ -182,7 +182,7 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
         logits, values = self.logits_layer(out), self.value_layer(out)
         inf_mask = torch.clamp(torch.log(mask), FLOAT_MIN)
         self._value_out = torch.reshape(values, [-1])
-        return logits, []
+        return logits + inf_mask, []
 
     def central_value_function(self, obs, action, other_actions):
         original_obs = restore_original_dimensions(obs, self.original_space, "torch")
@@ -192,7 +192,7 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
         outs.append(vf_cnn_out)
         flatten_self_acts = one_hot(action, self.action_space)
         outs.append(flatten_self_acts)
-        flatten_other_acts = one_hot(other_actions, self.action_space).reshape(original_obs[0].size()[0], (self.n_agents-1) * 5)
+        flatten_other_acts = one_hot(other_actions, self.action_space).reshape(original_obs[0].size()[0], (self.n_agents-1) * 4)
         outs.append(flatten_other_acts)
 
         out = torch.cat(outs, dim=1)
