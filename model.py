@@ -139,7 +139,7 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
 
         # Centralized critic post fc layer
         # one-shot (Discrete action space)
-        vf_concat_size += 4 * self.n_agents
+        vf_concat_size += 5 * self.n_agents
 
         self.vf_post_fc_stack = ModelCatalog.get_model_v2(
             Box(float("-inf"),
@@ -184,16 +184,26 @@ class ComplexInputNetworkandCentrailzedCritic(TorchModelV2, nn.Module):
         self._value_out = torch.reshape(values, [-1])
         return logits + inf_mask, []
 
-    def central_value_function(self, obs, action, other_actions):
+    def central_value_function(self, obs, action, self_id, other_actions_id_tagged):
         original_obs = restore_original_dimensions(obs, self.original_space, "torch")
         outs = []
 
         vf_cnn_out, _ = self.vf_cnns[1]({"obs": original_obs[1]})
         outs.append(vf_cnn_out)
+
         flatten_self_acts = one_hot(action, self.action_space)
-        outs.append(flatten_self_acts)
-        flatten_other_acts = one_hot(other_actions, self.action_space).reshape(original_obs[0].size()[0], (self.n_agents-1) * 4)
-        outs.append(flatten_other_acts)
+        self_id = torch.unsqeeze(self_id, dim=1)
+        tagged_action = torch.cat((flatten_self_acts, self_id), dim=1)
+        outs.append(tagged_action)
+
+        other_actions = torch.chunck(other_actions_id_tagged, 2, dim=1)
+        split_acitons = torch.squeeze(other_actions[0])
+        split_id = torch.squeeze(other_actions[1])
+        flatten_oas = one_hot(split_acitons, self.action_space)
+        split_id = torch.unsqeeze(split_id, dim=-1)
+        tagged_flatten_oas = torch.cat((flatten_oas, split_id), dim=-1)
+        tagged_flatten_oas = tagged_flatten_oas.reshape(-1.5 * (self.n_agents-1))
+        outs.append(tagged_flatten_oas)
 
         out = torch.cat(outs, dim=1)
         out, _ = self.vf_post_fc_stack({"obs": out}, [], None)

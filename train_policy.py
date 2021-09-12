@@ -49,6 +49,7 @@ torch, nn = try_import_torch()
 
 OBS = "obs"
 OTHER_AGENTS_ACTION = "other_agents_actions"
+SELF_ID = "self_id"
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -91,13 +92,16 @@ def centralized_critic_postprocessing(policy,
         # get others sample batch from other_agent_batches
         agent_id = sample_batch["agent_index"][0]
         agents = ["agent_0", "agent_1", "agent_2"]
+        id_map = {"agent_0": 1, "agent_1": 2, "agent_2": 3}
         agents.pop(agent_id)
         other_acts_batch = np.stack(
-            [other_agent_batches[agent_id][1]["actions"] for agent_id in agents],
-            axis=1)
+            [np.stack((other_agent_batches[other_agent_id][1]["actions"],
+                      np.ones_like(other_agent_batches[other_agent_id][1]["actions"]) * id_map[other_agent_id]), axis=1)
+             for other_agent_id in agents], axis=-1)
 
         # record all actions in the trajectory
         sample_batch[OTHER_AGENTS_ACTION] = other_acts_batch
+        sample_batch[SELF_ID] = np.ones_like(sample_batch["agent_index"]) * (agent_id+1).astype(np.float32)
 
         # overwrite default VF prediction with the central VF
         sample_batch[SampleBatch.VF_PREDS] = policy.compute_central_vf(
@@ -106,14 +110,17 @@ def centralized_critic_postprocessing(policy,
             convert_to_torch_tensor(
                 sample_batch[SampleBatch.ACTIONS], policy.device),
             convert_to_torch_tensor(
+                sample_batch[SELF_ID], policy.device),
+            convert_to_torch_tensor(
                 sample_batch[OTHER_AGENTS_ACTION], policy.device)) \
             .cpu().detach().numpy()
 
     else:
         # Policy hasn't been initialized yet, use zeros.
         sample_batch[OTHER_AGENTS_ACTION] = np.zeros_like(
-            np.stack((sample_batch[SampleBatch.ACTIONS],
-                      sample_batch[SampleBatch.ACTIONS],), axis=-1))
+            np.stack((np.c_[sample_batch[SampleBatch.ACTIONS],sample_batch[SampleBatch.AGENT_INDEX]],
+                      np.c_[sample_batch[SampleBatch.ACTIONS],sample_batch[SampleBatch.AGENT_INDEX]],), axis=-1))
+        sample_batch[SELF_ID] = np.zeros_like(sample_batch[SampleBatch.AGENT_INDEX])
         sample_batch[SampleBatch.VF_PREDS] = np.zeros_like(
             sample_batch[SampleBatch.REWARDS], dtype=np.float32)
 
@@ -140,7 +147,10 @@ def loss_with_central_critic(policy, model, dist_class, train_batch):
 
     vf_saved = model.value_function
     model.value_function = lambda: policy.model.central_value_function(
-        train_batch[SampleBatch.CUR_OBS], train_batch[SampleBatch.ACTIONS], train_batch[OTHER_AGENTS_ACTION])
+        train_batch[SampleBatch.CUR_OBS],
+        train_batch[SampleBatch.ACTIONS],
+        train_batch[SELF_ID],
+        train_batch[OTHER_AGENTS_ACTION])
 
     policy._central_value_out = model.value_function()
     loss = func(policy, model, dist_class, train_batch)
