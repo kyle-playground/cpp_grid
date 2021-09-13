@@ -118,8 +118,8 @@ def centralized_critic_postprocessing(policy,
     else:
         # Policy hasn't been initialized yet, use zeros.
         sample_batch[OTHER_AGENTS_ACTION] = np.zeros_like(
-            np.stack((np.c_[sample_batch[SampleBatch.ACTIONS],sample_batch[SampleBatch.AGENT_INDEX]],
-                      np.c_[sample_batch[SampleBatch.ACTIONS],sample_batch[SampleBatch.AGENT_INDEX]],), axis=-1))
+            np.stack((np.c_[sample_batch[SampleBatch.ACTIONS], sample_batch[SampleBatch.AGENT_INDEX]],
+                      np.c_[sample_batch[SampleBatch.ACTIONS], sample_batch[SampleBatch.AGENT_INDEX]],), axis=-1))
         sample_batch[SELF_ID] = np.zeros_like(sample_batch[SampleBatch.AGENT_INDEX])
         sample_batch[SampleBatch.VF_PREDS] = np.zeros_like(
             sample_batch[SampleBatch.REWARDS], dtype=np.float32)
