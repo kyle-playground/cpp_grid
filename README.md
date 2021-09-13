@@ -9,7 +9,7 @@ PPO and centralized critic are adopted for the policy, the setting is overall a 
 
 ## Reward setting
 <pre>
-Reward = 1      If new grid, -0.2 if revisited
+Reward = 1      If new grid
 
 </pre>
 ## Observation(state) for policy:
