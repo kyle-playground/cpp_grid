@@ -35,7 +35,7 @@ Total_steps_per_round: 150
 
 ![Screenshot 2021-09-10 17_44_26](https://user-images.githubusercontent.com/64893909/132844721-91ad5c95-225e-41a7-b7d0-fb75ff91fb30.png)
 
-## Incomplete cause candidates:
+## Issue:
 
 1. Unstable Environmnet (CTDE)
 2. Sometimes fail to detour (CNN)
